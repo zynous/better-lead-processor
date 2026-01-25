@@ -1,0 +1,20 @@
+{
+  "httpMethod": "POST",
+  "path": "/api/v1/better-lead-processor/lice-squad/barrie",
+  "pathParameters": {
+    "franchisor-name": "lice-squad",
+    "franchise-name": "barrie"
+  },
+  "headers": {
+    "Content-Type": "application/json",
+    "X-API-Key": "550e8400-e29b-41d4-a716-446655440000"
+  },
+  "queryStringParameters": null,
+  "body": {
+    "firstName": "John",
+    "lastName": "Doe",
+    "email": "john.doe@example.com"
+  },
+  "isBase64Encoded": false
+}
+

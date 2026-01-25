@@ -1,0 +1,49 @@
+{
+    "name": "better-lead-processor",
+    "version": "1.0.0",
+    "description": "Serverless Lambda function to process and map leads to Better CRM",
+    "main": "dist/index.js",
+    "scripts": {
+        "build": "tsc",
+        "watch": "tsc --watch",
+        "test": "jest",
+        "test:watch": "jest --watch",
+        "lint": "eslint src --ext .ts",
+        "format": "prettier --write \"src/**/*.ts\"",
+        "sam:build": "sam build",
+        "sam:local": "sam local invoke LeadProcessor -e",
+        "sam:start-api": "sam local start-api"
+    },
+    "keywords": [
+        "lambda",
+        "serverless",
+        "better-crm",
+        "lead-processor"
+    ],
+    "author": "",
+    "license": "ISC",
+    "dependencies": {
+        "@aws-sdk/client-secrets-manager": "^3.975.0",
+        "@aws-sdk/client-ses": "^3.975.0",
+        "@langchain/core": "^1.1.0",
+        "@langchain/openai": "^1.1.0",
+        "zod": "^4.0.0"
+    },
+    "devDependencies": {
+        "@types/aws-lambda": "^8.10.145",
+        "@types/jest": "^29.5.14",
+        "@types/node": "^24.0.0",
+        "@typescript-eslint/eslint-plugin": "^8.18.2",
+        "@typescript-eslint/parser": "^8.18.2",
+        "eslint": "^9.18.0",
+        "jest": "^29.7.0",
+        "prettier": "^3.4.2",
+        "ts-jest": "^29.2.5",
+        "typescript": "^5.9.0"
+    },
+    "engines": {
+        "node": ">=24.0.0",
+        "pnpm": ">=9.0.0"
+    },
+    "packageManager": "pnpm@9.0.0"
+}

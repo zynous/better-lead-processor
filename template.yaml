@@ -1,0 +1,122 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Better Lead Processor - Serverless Lambda to process and map leads to Better CRM
+
+Parameters:
+  DomainName:
+    Type: String
+    Default: integration.zynous.com
+    Description: Custom domain for API Gateway
+  HostedZoneId:
+    Type: String
+    Description: Route53 Hosted Zone ID for zynous.com
+  CertificateArn:
+    Type: String
+    Default: arn:aws:acm:us-east-1:324037318957:certificate/5506f905-2b00-4e94-91f6-3d3b0e6d411e
+    Description: ACM Certificate ARN for the domain
+
+Globals:
+  Function:
+    Timeout: 300
+    MemorySize: 512
+    Runtime: nodejs24.x
+    Environment:
+      Variables:
+        NODE_ENV: production
+
+Resources:
+  LeadProcessorFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: better-lead-processor
+      CodeUri: dist/
+      Handler: index.handler
+      Runtime: nodejs24.x
+      MemorySize: 512
+      Timeout: 300
+      Layers:
+        - !Sub 'arn:aws:lambda:${AWS::Region}:177933569100:layer:AWS-Parameters-and-Secrets-Lambda-Extension:4'
+      Environment:
+        Variables:
+          NODE_ENV: production
+          SES_FROM_EMAIL: team@zynous.com
+      Events:
+        ApiEndpoint1:
+          Type: Api
+          Properties:
+            Path: /api/v1/better-lead-processor/{franchisor-name}/{franchise-name}
+            Method: post
+            RestApiId: !Ref LeadProcessorApi
+        ApiEndpoint2:
+          Type: Api
+          Properties:
+            Path: /api/v1/better-lead-processor/{franchisor-name}
+            Method: post
+            RestApiId: !Ref LeadProcessorApi
+      Policies:
+        - Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action:
+                - secretsmanager:GetSecretValue
+              Resource: !Sub 'arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:better-lead-processor/*'
+            - Effect: Allow
+              Action:
+                - ses:SendEmail
+                - ses:SendRawEmail
+              Resource: '*'
+            - Effect: Allow
+              Action:
+                - logs:CreateLogGroup
+                - logs:CreateLogStream
+                - logs:PutLogEvents
+              Resource: !Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/better-lead-processor*'
+
+  LeadProcessorApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: production
+      Cors:
+        AllowMethods: "'POST,OPTIONS'"
+        AllowHeaders: "'Content-Type,X-API-Key'"
+        AllowOrigin: "'*'"
+
+  # Custom Domain Configuration
+  ApiGatewayCustomDomain:
+    Type: AWS::ApiGateway::DomainName
+    Properties:
+      DomainName: !Ref DomainName
+      CertificateArn: !Ref CertificateArn
+
+  ApiGatewayBasePathMapping:
+    Type: AWS::ApiGateway::BasePathMapping
+    DependsOn: LeadProcessorApi
+    Properties:
+      BasePath: ''
+      DomainName: !Ref ApiGatewayCustomDomain
+      RestApiId: !Ref LeadProcessorApi
+      Stage: production
+
+  # Route53 DNS Record
+  Route53RecordSet:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: !Ref HostedZoneId
+      Name: !Ref DomainName
+      Type: CNAME
+      TTL: 300
+      ResourceRecords:
+        - !GetAtt ApiGatewayCustomDomain.DistributionDomainName
+
+Outputs:
+  LeadProcessorApi:
+    Description: API Gateway endpoint URL
+    Value: !Sub 'https://${DomainName}/api/v1'
+  LeadProcessorFunction:
+    Description: Lead Processor Lambda Function ARN
+    Value: !GetAtt LeadProcessorFunction.Arn
+  CustomDomain:
+    Description: Custom domain URL
+    Value: !Sub 'https://${DomainName}'
+
+

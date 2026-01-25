@@ -1,0 +1,47 @@
+# Dependencies
+node_modules/
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Build output
+dist/
+.aws-sam/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Local configs (may contain secrets)
+local-configs/*
+
+# Production configs (may contain secrets)
+prod-configs/*
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Testing
+coverage/
+.nyc_output/
+
+# AWS
+.aws-sam/
+samconfig.toml
+
+# TypeScript
+*.tsbuildinfo
+
