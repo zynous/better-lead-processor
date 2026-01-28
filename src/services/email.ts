@@ -22,15 +22,27 @@ export async function sendFailureNotification(
 
   const title = `Lead Processing Failed - ${franchisorName}/${franchiseName}`;
   
-  let body = `
-Reason: ${reason}`;
-
+  // Prettify JSON request body
+  let prettifiedBody = '';
   if (requestBody) {
-    const requestBodyStr = typeof requestBody === 'string' 
-      ? requestBody 
-      : JSON.stringify(requestBody, null, 2);
-    body += `\n\nRequest Body:\n${requestBodyStr}`;
+    if (typeof requestBody === 'string') {
+      try {
+        prettifiedBody = JSON.stringify(JSON.parse(requestBody), null, 2);
+      } catch {
+        prettifiedBody = requestBody;
+      }
+    } else {
+      prettifiedBody = JSON.stringify(requestBody, null, 2);
+    }
   }
+  
+  let body = `
+Hi,
+
+The lead that was submitted from your website was not created on Better CRM successfully. Here is the lead data that was submitted:
+${prettifiedBody}
+
+Reason: ${reason}`;
 
   const emailBody = body.trim();
 
@@ -62,4 +74,3 @@ Reason: ${reason}`;
     // Don't throw - email failure shouldn't break the flow
   }
 }
-
