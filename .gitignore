@@ -45,3 +45,6 @@ samconfig.toml
 # TypeScript
 *.tsbuildinfo
 
+# docs 
+docs/
+events/

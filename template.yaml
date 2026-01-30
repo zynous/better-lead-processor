@@ -34,6 +34,7 @@ Resources:
       Runtime: nodejs24.x
       MemorySize: 512
       Timeout: 300
+      ReservedConcurrentExecutions: 20
       Layers:
         - !Sub 'arn:aws:lambda:${AWS::Region}:177933569100:layer:AWS-Parameters-and-Secrets-Lambda-Extension:4'
       Environment:
@@ -80,6 +81,11 @@ Resources:
         AllowMethods: "'POST,OPTIONS'"
         AllowHeaders: "'Content-Type,X-API-Key'"
         AllowOrigin: "'*'"
+      MethodSettings:
+        - ResourcePath: '/*'
+          HttpMethod: '*'
+          ThrottlingRateLimit: 50
+          ThrottlingBurstLimit: 100
 
   # Custom Domain Configuration
   ApiGatewayCustomDomain:
