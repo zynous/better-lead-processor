@@ -10,7 +10,7 @@ export const LeadDataSchema = z.any().refine(
 // LeadData can be any object structure - LLM will map it
 export type LeadData = Record<string, unknown>;
 
-// Better CRM Lead Schema (output format)
+// Better CRM Lead Schema (output format). profile is optional for parsing resilience; caller must ensure it exists or fallback.
 export const BetterCRMLeadSchema = z.object({
   profile: z.object({
     first_name: z.string().optional(),
@@ -31,7 +31,7 @@ export const BetterCRMLeadSchema = z.object({
     'is-enabled_email': z.string().optional(),
     'is-enabled_sms': z.string().optional(),
     preferred_pronouns: z.string().optional(),
-  }),
+  }).optional(),
   information: z.object({
     account_owner: z.union([z.string(), z.number()]).optional(),
     ageRange: z.string().optional(),

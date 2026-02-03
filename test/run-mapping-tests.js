@@ -1,0 +1,92 @@
+/**
+ * Run mapping test cases: for each input in input-cases.json, call the LLM mapper
+ * (no Lambda handler, no Better CRM) and write results to actual-output.json.
+ *
+ * Prerequisites:
+ * - pnpm build
+ * - local-configs/app-config.json and local-configs/lice-squad.json
+ *
+ * Usage (from project root): node test/run-mapping-tests.js
+ *
+ * Then compare actual-output.json with expected-output.json (e.g. diff or script).
+ */
+
+const fs = require('fs');
+const path = require('path');
+
+const projectRoot = path.join(__dirname, '..');
+const localConfigsDir = path.join(projectRoot, 'local-configs');
+const testDir = __dirname;
+
+if (!fs.existsSync(path.join(localConfigsDir, 'app-config.json'))) {
+  console.error('Missing local-configs/app-config.json. Copy from prod-configs or create for local testing.');
+  process.exit(1);
+}
+if (!fs.existsSync(path.join(localConfigsDir, 'lice-squad.json'))) {
+  console.error('Missing local-configs/lice-squad.json. Copy from prod-configs or create for local testing.');
+  process.exit(1);
+}
+
+delete process.env.AWS_LAMBDA_FUNCTION_NAME;
+
+const { getSystemConfig, getFranchiseConfig } = require(path.join(projectRoot, 'dist/services/secrets-manager'));
+const { LLMMapperService } = require(path.join(projectRoot, 'dist/services/llm-mapper'));
+
+async function runMappingTests() {
+  const inputPath = path.join(testDir, 'input-cases.json');
+  const outputPath = path.join(testDir, 'actual-output.json');
+
+  const inputFile = JSON.parse(fs.readFileSync(inputPath, 'utf8'));
+  const cases = inputFile.cases || [];
+  if (cases.length === 0) {
+    console.error('No cases in input-cases.json');
+    process.exit(1);
+  }
+
+  console.log(`Running ${cases.length} mapping test cases...\n`);
+
+  const systemConfig = await getSystemConfig();
+  const franchiseConfig = await getFranchiseConfig('lice-squad', 'barrie');
+  const mapper = new LLMMapperService(systemConfig, franchiseConfig);
+
+  const results = {
+    description: 'Actual mapped output from run-mapping-tests.js. Compare with expected-output.json.',
+    runAt: new Date().toISOString(),
+    cases: [],
+  };
+
+  for (let i = 0; i < cases.length; i++) {
+    const tc = cases[i];
+    const id = tc.id || `case-${i + 1}`;
+    const description = tc.description || '';
+    const input = tc.input || {};
+
+    process.stdout.write(`  [${i + 1}/${cases.length}] ${id} ... `);
+    try {
+      const output = await mapper.mapLeadData(input);
+      results.cases.push({
+        id,
+        description,
+        input,
+        output: JSON.parse(JSON.stringify(output)),
+      });
+      console.log('OK');
+    } catch (err) {
+      console.log('FAIL');
+      results.cases.push({
+        id,
+        description,
+        input,
+        error: err.message || String(err),
+      });
+    }
+  }
+
+  fs.writeFileSync(outputPath, JSON.stringify(results, null, 2), 'utf8');
+  console.log(`\nWrote ${results.cases.length} results to test/actual-output.json`);
+}
+
+runMappingTests().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});

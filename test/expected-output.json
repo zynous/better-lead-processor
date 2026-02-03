@@ -1,0 +1,167 @@
+{
+  "description": "Expected mapped output per case (Better CRM shape). Use for comparison with actual-output.json after running run-mapping-tests.js.",
+  "cases": [
+    {
+      "id": "minimal-camel",
+      "expected": {
+        "profile": {
+          "first_name": "Jane",
+          "last_name": "Smith",
+          "email_address": "jane.smith@example.com",
+          "phone": [{ "formatted": "+1-416-555-0100" }]
+        }
+      }
+    },
+    {
+      "id": "minimal-snake",
+      "expected": {
+        "profile": {
+          "first_name": "Bob",
+          "last_name": "Wilson",
+          "email_address": "bob.wilson@example.com",
+          "phone": [{ "formatted": "416-555-0200" }]
+        }
+      }
+    },
+    {
+      "id": "phone-variations",
+      "expected": {
+        "profile": {
+          "first_name": "Alice",
+          "last_name": "Brown",
+          "email_address": "alice@example.com",
+          "phone": [{ "formatted": "+1-905-555-0300" }]
+        }
+      }
+    },
+    {
+      "id": "postal-variations",
+      "expected": {
+        "profile": {
+          "first_name": "Chris",
+          "last_name": "Lee",
+          "email_address": "chris.lee@example.com"
+        },
+        "address": {
+          "postalCode": "L4M 1A1"
+        }
+      }
+    },
+    {
+      "id": "business-name",
+      "expected": {
+        "profile": {
+          "first_name": "Dana",
+          "last_name": "Jones",
+          "business_name": "Jones Consulting",
+          "email_address": "dana@jonesconsulting.com",
+          "phone": [{ "formatted": "647-555-0400" }]
+        }
+      }
+    },
+    {
+      "id": "address-fields",
+      "expected": {
+        "profile": {
+          "first_name": "Evan",
+          "last_name": "Taylor",
+          "email_address": "evan@example.com"
+        },
+        "address": {
+          "city": "Barrie",
+          "province": "ON",
+          "country": "Canada",
+          "postalCode": "L4M 2N2",
+          "deliveryAddress": "100 Main Street"
+        }
+      }
+    },
+    {
+      "id": "address-snake",
+      "expected": {
+        "profile": {
+          "first_name": "Fran",
+          "last_name": "Martinez",
+          "email_address": "fran@example.com"
+        },
+        "address": {
+          "deliveryAddress": "200 King St",
+          "deliveryAddress2": "Suite 5",
+          "city": "Toronto",
+          "province": "ON",
+          "postalCode": "M5V 1K4",
+          "country": "Canada"
+        }
+      }
+    },
+    {
+      "id": "information-fields",
+      "expected": {
+        "profile": {
+          "first_name": "Grace",
+          "last_name": "Kim",
+          "email_address": "grace@example.com"
+        },
+        "information": {
+          "source_id": "web-form-123",
+          "website": "https://gracekim.com",
+          "linkedin": "linkedin.com/in/gracekim",
+          "bio": "Software developer"
+        }
+      }
+    },
+    {
+      "id": "unmappable-to-note",
+      "expected": {
+        "profile": {
+          "first_name": "Henry",
+          "last_name": "Ng",
+          "email_address": "henry@example.com",
+          "phone": [{ "formatted": "416-555-0600" }]
+        },
+        "note": "customSource=landing-page\nutm_campaign=summer-2025\nreferral=google"
+      }
+    },
+    {
+      "id": "full-profile-variations",
+      "expected": {
+        "profile": {
+          "first_name": "Ivy",
+          "last_name": "Chen",
+          "email_address": "ivy.chen@example.com",
+          "phone": [{ "formatted": "+1-416-555-0700" }],
+          "identification": "IC-001",
+          "allow_calls": "yes",
+          "allow_marketing_email": "no",
+          "role_description": "Manager"
+        }
+      }
+    },
+    {
+      "id": "mixed-case",
+      "expected": {
+        "profile": {
+          "first_name": "Jack",
+          "last_name": "White",
+          "email_address": "jack@example.com",
+          "phone": [{ "formatted": "905-555-0800" }],
+          "business_name": "White & Co"
+        },
+        "address": {
+          "postalCode": "M4B 1B3"
+        }
+      }
+    },
+    {
+      "id": "extra-only",
+      "expected": {
+        "profile": {
+          "first_name": "Kate",
+          "last_name": "Green",
+          "email_address": "kate@example.com"
+        },
+        "note": "campaign_id=cmp-999\nlead_score=85"
+      }
+    }
+  ]
+}

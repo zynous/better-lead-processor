@@ -19,6 +19,16 @@ interface FranchiseConfigWithCredentials {
   };
 }
 
+/** Parse Better CRM error response body and return msg if present. */
+function parseBetterCRMMessage(responseText: string): string | null {
+  try {
+    const body = JSON.parse(responseText) as { msg?: string };
+    return typeof body?.msg === 'string' ? body.msg : null;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Better CRM API Service
  * Handles OAuth2 authentication and lead creation
@@ -116,7 +126,9 @@ export class BetterCRMService {
     const response = await retry(
       async () => {
         const requestBody = JSON.stringify(lead);
-        logger.debug('Better CRM request', {
+        logger.info('Payload sent to Better CRM lead API', {
+          franchisorName: this.config.franchisor_name,
+          franchiseName: this.config.franchise_name,
           url: createLeadUrl,
           payload: requestBody,
         });
@@ -130,36 +142,53 @@ export class BetterCRMService {
           body: requestBody,
         });
 
-        if (!res.ok) {
-          const errorText = await res.text();
+        const responseText = await res.text();
+
+        if (res.status !== 201) {
+          const apiMsg = parseBetterCRMMessage(responseText);
           logger.error('Better CRM API error', {
             status: res.status,
             statusText: res.statusText,
-            error: errorText,
+            error: responseText,
             payload: requestBody,
           });
-          // Throw user-friendly error (internal details logged above)
-          throw new Error(ERROR_MESSAGES.BETTER_CRM_ERROR);
+          throw new Error(apiMsg || ERROR_MESSAGES.BETTER_CRM_ERROR);
         }
 
-        return res;
+        return { ok: true, text: responseText };
       },
       { maxRetries: 3, initialDelayMs: 1000 }
     );
 
-    const result = (await response.json()) as {
+    const result = JSON.parse(response.text) as {
       code: number;
+      msg?: string;
       data?: { id: number };
       id?: number;
+      [key: string]: unknown;
     };
 
-    // Better CRM returns id in data.id or directly as id
-    const leadId = result.data?.id || result.id || 0;
+    // API doc: successful response is Code 201. Body code must be 201; fail otherwise (e.g. 704).
+    if (result.code !== 201) {
+      const apiMsg = result.msg || String(result);
+      logger.error('Better CRM API error (body code)', {
+        franchisorName: this.config.franchisor_name,
+        franchiseName: this.config.franchise_name,
+        code: result.code,
+        msg: result.msg,
+        response: result,
+      });
+      throw new Error(apiMsg || ERROR_MESSAGES.BETTER_CRM_ERROR);
+    }
 
-    logger.info('Lead created successfully', {
-      leadId,
+    // Better CRM returns id in data.id or directly as id
+    const leadId = result.data?.id ?? result.id ?? 0;
+
+    logger.info('Better CRM create-lead response', {
       franchisorName: this.config.franchisor_name,
       franchiseName: this.config.franchise_name,
+      response: result,
+      leadId,
     });
 
     return leadId;

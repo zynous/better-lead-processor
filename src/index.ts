@@ -7,7 +7,7 @@ import { sendFailureNotification } from './services/email';
 import { logger, LogConfig } from './utils';
 import { lookupFranchiseByPostalCode } from './handlers';
 import { validatePathParameters, validateRequestBody, validateLeadData } from './validators';
-import { ERROR_MESSAGES, getUserFriendlyErrorReason } from './error-messages';
+import { ERROR_MESSAGES } from './error-messages';
 
 /**
  * Extract API key from request (header or query parameter)
@@ -125,6 +125,13 @@ export async function handler(
 
     const leadData = leadValidation.data;
 
+    logger.info('Input request lead data received', {
+      requestId,
+      franchisorName,
+      franchiseName: franchiseName ?? '(postal-code lookup pending)',
+      inputLeadData: leadData,
+    });
+
     // Handle endpoint 2: postal code to franchise mapping
     if (!franchiseName) {
       const result = await lookupFranchiseByPostalCode(franchisorName, leadData, requestId);
@@ -202,9 +209,10 @@ export async function handler(
         );
 
         if (franchiseConfig.config.notification_settings.email_on_failure) {
-          // Use user-friendly error reason (never expose internal errors)
-          const userFriendlyReason = getUserFriendlyErrorReason(error);
-          
+          // Use actual error message for email so recipients see the real failure reason
+          const errorReason =
+            error instanceof Error ? error.message : String(error);
+
           // Get request body from event
           let requestBody: unknown = null;
           try {
@@ -215,12 +223,12 @@ export async function handler(
             // If parsing fails, use raw body
             requestBody = event.body;
           }
-          
+
           await sendFailureNotification(
             franchiseConfig.config.notification_settings.notification_emails,
             franchiseConfig.franchisor_name,
             franchiseConfig.franchise_name,
-            userFriendlyReason,
+            errorReason,
             requestBody
           );
         }

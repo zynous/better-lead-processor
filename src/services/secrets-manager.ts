@@ -9,19 +9,33 @@ import * as http from 'http';
 
 const IS_LOCAL = process.env.AWS_SAM_LOCAL === 'true' || !process.env.AWS_LAMBDA_FUNCTION_NAME;
 const SECRETS_EXTENSION_HTTP_PORT = 2773;
-const SECRETS_EXTENSION_ENDPOINT = `http://localhost:${SECRETS_EXTENSION_HTTP_PORT}/secretsmanager/get?secretId=`;
 
 // Cache for secrets (Lambda container reuse)
 const secretCache = new Map<string, { value: unknown; timestamp: number }>();
 const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
 /**
- * Get secret from Lambda Extension (faster, cached by extension)
+ * Get secret from Lambda Extension (faster, cached by extension).
+ * Extension requires X-Aws-Parameters-Secrets-Token header set to AWS_SESSION_TOKEN.
  */
 async function getSecretFromExtension(secretName: string): Promise<string> {
+  const sessionToken = process.env.AWS_SESSION_TOKEN;
+  if (!sessionToken) {
+    throw new Error('AWS_SESSION_TOKEN not set (required by Parameters and Secrets Extension)');
+  }
+
   return new Promise((resolve, reject) => {
-    const url = `${SECRETS_EXTENSION_ENDPOINT}${encodeURIComponent(secretName)}`;
-    const request = http.get(url, (response) => {
+    const path = `/secretsmanager/get?secretId=${encodeURIComponent(secretName)}`;
+    const options: http.RequestOptions = {
+      hostname: 'localhost',
+      port: SECRETS_EXTENSION_HTTP_PORT,
+      path,
+      method: 'GET',
+      headers: {
+        'X-Aws-Parameters-Secrets-Token': sessionToken,
+      },
+    };
+    const request = http.get(options, (response) => {
       let data = '';
 
       response.on('data', (chunk) => {

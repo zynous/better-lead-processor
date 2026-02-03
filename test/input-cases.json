@@ -1,0 +1,149 @@
+{
+  "description": "Input test cases for LLM mapping. Covers field name variations (camelCase, snake_case, etc.) and unmappable fields -> note.",
+  "apiKey": "550e8400-e29b-41d4-a716-546655440000",
+  "cases": [
+    {
+      "id": "minimal-camel",
+      "description": "Minimal lead: firstName, lastName, email, phone (camelCase)",
+      "input": {
+        "firstName": "Jane",
+        "lastName": "Smith",
+        "email": "jane.smith@example.com",
+        "phone": "+1-416-555-0100"
+      }
+    },
+    {
+      "id": "minimal-snake",
+      "description": "Minimal lead: first_name, last_name, email, phone (snake_case)",
+      "input": {
+        "first_name": "Bob",
+        "last_name": "Wilson",
+        "email": "bob.wilson@example.com",
+        "phone": "416-555-0200"
+      }
+    },
+    {
+      "id": "phone-variations",
+      "description": "Phone field names: phone, phoneNumber, phone_number",
+      "input": {
+        "firstName": "Alice",
+        "lastName": "Brown",
+        "email": "alice@example.com",
+        "phoneNumber": "+1-905-555-0300"
+      }
+    },
+    {
+      "id": "postal-variations",
+      "description": "Postal/zip: postalCode, postal_code, zip, zipCode",
+      "input": {
+        "first_name": "Chris",
+        "last_name": "Lee",
+        "email": "chris.lee@example.com",
+        "postalCode": "L4M 1A1"
+      }
+    },
+    {
+      "id": "business-name",
+      "description": "Business: businessName, business_name",
+      "input": {
+        "firstName": "Dana",
+        "lastName": "Jones",
+        "businessName": "Jones Consulting",
+        "email": "dana@jonesconsulting.com",
+        "phone": "647-555-0400"
+      }
+    },
+    {
+      "id": "address-fields",
+      "description": "Address: city, province, state, country, street, deliveryAddress",
+      "input": {
+        "first_name": "Evan",
+        "last_name": "Taylor",
+        "email": "evan@example.com",
+        "city": "Barrie",
+        "province": "ON",
+        "country": "Canada",
+        "postalCode": "L4M 2N2",
+        "deliveryAddress": "100 Main Street"
+      }
+    },
+    {
+      "id": "address-snake",
+      "description": "Address snake_case: delivery_address, postal_code",
+      "input": {
+        "firstName": "Fran",
+        "lastName": "Martinez",
+        "email": "fran@example.com",
+        "deliveryAddress": "200 King St",
+        "deliveryAddress2": "Suite 5",
+        "city": "Toronto",
+        "province": "ON",
+        "postal_code": "M5V 1K4",
+        "country": "Canada"
+      }
+    },
+    {
+      "id": "information-fields",
+      "description": "Information: source_id, website, linkedin, bio, date_of_birth",
+      "input": {
+        "firstName": "Grace",
+        "lastName": "Kim",
+        "email": "grace@example.com",
+        "source_id": "web-form-123",
+        "website": "https://gracekim.com",
+        "linkedin": "linkedin.com/in/gracekim",
+        "bio": "Software developer"
+      }
+    },
+    {
+      "id": "unmappable-to-note",
+      "description": "Unmappable fields must go to note: customSource, utm_campaign, referral",
+      "input": {
+        "firstName": "Henry",
+        "lastName": "Ng",
+        "email": "henry@example.com",
+        "phone": "416-555-0600",
+        "customSource": "landing-page",
+        "utm_campaign": "summer-2025",
+        "referral": "google"
+      }
+    },
+    {
+      "id": "full-profile-variations",
+      "description": "Many profile variants: identification, allow_calls, role_description",
+      "input": {
+        "first_name": "Ivy",
+        "last_name": "Chen",
+        "email_address": "ivy.chen@example.com",
+        "phone": "+1-416-555-0700",
+        "identification": "IC-001",
+        "allow_calls": "yes",
+        "allow_marketing_email": "no",
+        "role_description": "Manager"
+      }
+    },
+    {
+      "id": "mixed-case",
+      "description": "Mixed camelCase and snake_case in same payload",
+      "input": {
+        "firstName": "Jack",
+        "last_name": "White",
+        "email": "jack@example.com",
+        "phone_number": "905-555-0800",
+        "postalCode": "M4B 1B3",
+        "business_name": "White & Co"
+      }
+    },
+    {
+      "id": "extra-only",
+      "description": "Only unmappable fields (profile still required by schema)",
+      "input": {
+        "firstName": "Kate",
+        "lastName": "Green",
+        "email": "kate@example.com",
+        "campaign_id": "cmp-999",
+        "lead_score": "85"
+      }
+    }
+  ]
+}
