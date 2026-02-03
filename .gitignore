@@ -37,6 +37,7 @@ logs/
 # Testing
 coverage/
 .nyc_output/
+test/actual-output.json
 
 # AWS
 .aws-sam/
