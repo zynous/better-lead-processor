@@ -9,7 +9,7 @@ export const ERROR_MESSAGES = {
   MISSING_FRANCHISOR_NAME: 'Missing franchisor-name in path',
   INVALID_JSON: 'Invalid JSON in request body',
   INVALID_LEAD_DATA: 'Invalid lead data format',
-  POSTAL_CODE_REQUIRED: 'Postal code is required for this endpoint',
+  POSTAL_CODE_REQUIRED: 'Postal code is required',
   POSTAL_CODE_TOO_SHORT: 'Postal code must be at least 3 characters',
 
   // Authentication Errors (401, 403)

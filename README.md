@@ -299,7 +299,7 @@ Request body must include something that can be interpreted as a postal code (e.
 
 ## Configuration (Secrets / prod-configs)
 
-- **System:** `better-lead-processor/app-config` — `llm_api_key`, `llm_provider`, `logging.level` (DEBUG, INFO, WARN, ERROR).
+- **System:** `better-lead-processor/app-config` — `llm_api_key`, `llm_provider`, `aws_region`, `ses_from_email`, `logging.level` (DEBUG, INFO, WARN, ERROR).
 - **Franchisor:** `better-lead-processor/{franchisor-name}` — `franchisor_name`, `api_key`, `active`, `locations` (each: `franchise_name`, `postal_code_mapping`), `credentials` (Better CRM client_id, client_secret, base_url, oauth_endpoint), `config.notification_settings` (email_on_failure, notification_emails), `config.llm_settings` (model, temperature).
 
 See `prod-configs/` for full examples. Do not commit secrets; validate with `jq empty prod-configs/*.json` before deploy-secrets.

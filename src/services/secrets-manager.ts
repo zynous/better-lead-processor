@@ -57,7 +57,9 @@ async function getSecretFromExtension(secretName: string): Promise<string> {
  * Get secret from Secrets Manager SDK (fallback)
  */
 async function getSecretFromSDK(secretName: string): Promise<string> {
-  const client = new SecretsManagerClient({ region: process.env.AWS_REGION || 'us-east-1' });
+  const systemConfig = await getSystemConfig();
+  const region = systemConfig.aws_region;
+  const client = new SecretsManagerClient({ region });
   const input: GetSecretValueCommandInput = {
     SecretId: secretName,
   };

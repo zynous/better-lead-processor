@@ -1,5 +1,6 @@
 import { SESClient, SendEmailCommand, SendEmailCommandInput } from '@aws-sdk/client-ses';
 import { logger } from '../utils';
+import { getSystemConfig } from './secrets-manager';
 
 const IS_LOCAL = process.env.AWS_SAM_LOCAL === 'true' || !process.env.AWS_LAMBDA_FUNCTION_NAME;
 
@@ -18,7 +19,11 @@ export async function sendFailureNotification(
     return;
   }
 
-  const client = new SESClient({ region: process.env.AWS_REGION || 'us-east-1' });
+  const systemConfig = await getSystemConfig();
+  const region = systemConfig.aws_region;
+  const fromEmail = systemConfig.ses_from_email;
+
+  const client = new SESClient({ region });
 
   const title = `Lead Processing Failed - ${franchisorName}/${franchiseName}`;
   
@@ -47,7 +52,7 @@ Reason: ${reason}`;
   const emailBody = body.trim();
 
   const params: SendEmailCommandInput = {
-    Source: process.env.SES_FROM_EMAIL || 'team@zynous.com',
+    Source: fromEmail,
     Destination: {
       ToAddresses: to,
     },

@@ -5,7 +5,8 @@ import { ERROR_MESSAGES } from '../error-messages';
 
 /**
  * FSA (Forward Sortation Area) to Franchise Name Mapping
- * Maps the first 3 characters of Canadian postal codes to franchise names
+ * Maps the first 3 characters of Canadian postal codes to franchise names.
+ * Includes L-prefix (standard) and digit-first aliases (1C0, 2L0, 1TO, etc.) for alternate input formats.
  */
 const FSA_TO_FRANCHISE_MAPPING: Record<string, string> = {
   'L4M': 'barrie',
@@ -29,6 +30,7 @@ const FSA_TO_FRANCHISE_MAPPING: Record<string, string> = {
   'L1A': 'port hope',
   'L9L': 'port perry',
   'L9P': 'uxbridge',
+  'L9T': 'uxbridge',
   'L1M': 'whitby',
   'L1N': 'whitby',
   'L1P': 'whitby',
@@ -38,6 +40,26 @@ const FSA_TO_FRANCHISE_MAPPING: Record<string, string> = {
   'L1J': 'oshawa',
   'L1K': 'oshawa',
   'L1L': 'oshawa',
+  'L2L': 'barrie',
+  'L2N': 'barrie',
+  '1C0': 'bowmanville',
+  '1K0': 'oshawa',
+  '1L0': 'oshawa',
+  '1N0': 'whitby',
+  '1R0': 'whitby',
+  '1W0': 'pickering',
+  '1P0': 'whitby',
+  '1A0': 'port hope',
+  '1E0': 'bowmanville',
+  '1S0': 'ajax',
+  '1T0': 'ajax',
+  '1B0': 'bowmanville',
+  '1G0': 'oshawa',
+  '1J0': 'oshawa',
+  '1M0': 'whitby',
+  '1TO': 'uxbridge',
+  '2L0': 'barrie',
+  '2N0': 'barrie',
 };
 
 /**

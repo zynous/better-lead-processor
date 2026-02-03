@@ -107,10 +107,12 @@ export const FranchiseConfigSchema = z.object({
 
 export type FranchiseConfig = z.infer<typeof FranchiseConfigSchema> & { franchise_name?: string };
 
-// System Config Schema (LLM API Key + Logging)
+// System Config Schema (LLM API Key + Logging + SES + Region)
 export const SystemConfigSchema = z.object({
   llm_api_key: z.string(),
   llm_provider: z.string().optional(),
+  aws_region: z.string().optional(),
+  ses_from_email: z.string().optional(),
   logging: z.object({
     level: z.enum(['DEBUG', 'INFO', 'WARN', 'ERROR']).optional(),
     includeTimestamp: z.boolean().optional(),

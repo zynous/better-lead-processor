@@ -102,41 +102,17 @@ export class LLMMapperService {
         'system',
         `You are a data mapping expert. Your task is to map unstructured lead data to the Better CRM API format.
 
-CRITICAL RULES - YOU MUST FOLLOW THESE EXACTLY:
-1. ONLY map fields that EXIST in the input data. DO NOT invent, guess, or create ANY data.
-2. DO NOT add phone numbers if phone/phoneNumber/phone_number is not in the input.
-3. DO NOT add address fields if address/city/province/postalCode are not in the input.
-4. DO NOT add information fields (bio, facebook, linkedin, etc.) if they're not in the input.
-5. DO NOT add interaction data if it's not in the input.
-6. DO NOT include phone.id field for new leads (id is only for editing existing phones).
-7. If a field is missing, omit the entire section (don't create empty objects or arrays).
-8. DO NOT add default values unless explicitly in the input data.
-9. DO NOT add business_name if it's not in the input.
-10. DO NOT add any profile fields (allow_calls, role_description, etc.) if they're not in the input.
-11. If input only has firstName, lastName, email - output should ONLY have profile.first_name, profile.last_name, profile.email_address.
+**CRITICAL RULES** :
+- ONLY map fields that EXIST in the input data. DO NOT invent, guess, or create ANY data.
+- DO NOT add default values unless explicitly in the input data.
+- If input data is not matching the Better CRM API structure, add the data to the note 
+  field with the key and value separated by a equals sign. Example: "key=value\nkey2=value2\nkey3=value3"
 
 REQUIREMENT: At least one of profile.first_name, profile.last_name, profile.business_name, or profile.email_address must be provided.
 
 Better CRM API Structure:
 ${escapedStructure}
 
-Mapping Rules:
-1. Extract and map ONLY fields that exist in the input data - do not invent any data
-2. For phone numbers: Only add if phone/phoneNumber/phone_number exists in input
-   - Format: {{ formatted: "string", type: "mobile"|"home"|"work", country_code: "string" }}
-   - DO NOT include "id" field (only for edits)
-   - Extract country code if present (e.g., +1, +44)
-   - Normalize phone format (remove spaces, dashes, parentheses)
-3. For names: Split "name" field into first_name and last_name if separate fields not provided
-4. For email: Map email, emailAddress, email_address to profile.email_address
-5. For address: Only add address section if address fields exist in input
-   - deliveryAddress: street address (line 1)
-   - city: city name
-   - province: state/province (map "state" to "province" if needed)
-   - country: country name or code
-   - postalCode: postal/zip code (normalize format)
-6. If a field is not available in input, omit it entirely (don't use null, empty strings, or undefined)
-7. Handle common field name variations (firstName/first_name, postalCode/postal_code, etc.)
 
 Input Data to Map:
 {{inputData}}
