@@ -77,7 +77,7 @@ export async function lookupFranchiseByPostalCode(
   requestId: string
 ): Promise<{ franchiseName: string } | { error: APIGatewayProxyResult }> {
   try {
-    logger.info('Endpoint 2: Mapping postal code to franchise', { requestId, franchisorName });
+    logger.info('Mapping postal code to franchise', { requestId, franchisorName });
 
     // Extract postal code from request
     const postalCode = extractPostalCode(leadData);

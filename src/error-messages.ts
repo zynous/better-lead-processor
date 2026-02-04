@@ -11,6 +11,11 @@ export const ERROR_MESSAGES = {
   INVALID_LEAD_DATA: 'Invalid lead data format',
   POSTAL_CODE_REQUIRED: 'Postal code is required',
   POSTAL_CODE_TOO_SHORT: 'Postal code must be at least 3 characters',
+  REQUIRED_FIELDS_MISSING:
+    'At least one of: first_name, last_name, business_name and email_address must be provided',
+
+  /** Prefix for errors thrown when LLM rejects (required fields missing). Used to return 400. */
+  LLM_REJECT_PREFIX: '[REQUIRED_FIELDS]',
 
   // Authentication Errors (401, 403)
   INVALID_API_KEY: 'Invalid API key',

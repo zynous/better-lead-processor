@@ -144,6 +144,18 @@
         "campaign_id": "cmp-999",
         "lead_score": "85"
       }
+    },
+    {
+      "id": "required-fields-missing",
+      "description": "No first/last/business/email — LLM should reject with 400",
+      "input": {
+        "firstName": "Kate",
+        "phone": "416-555-0600",
+        "postalCode": "L1J 1A1",
+        "customSource": "landing-page",
+        "utm_campaign": "summer-2025",
+        "referral": "google"
+      }
     }
   ]
 }

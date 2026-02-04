@@ -134,7 +134,6 @@ export async function getFranchiseConfig(
     client_id: string;
     client_secret: string;
     base_url: string;
-    oauth_endpoint: string;
   };
   config: FranchiseConfig['config'] & { llm_settings: { model: string; temperature?: number } } 
 }> {
@@ -173,13 +172,18 @@ export async function getFranchiseConfig(
     throw new Error(`Credentials are required for franchise: ${franchiseName}`);
   }
 
-  // Merge configs: franchisor defaults + franchise overrides
+  const systemConfig = await getSystemConfig();
+
+  // Merge configs: franchisor defaults + franchise overrides; base_url from system config
   return {
     franchisor_name: franchisorConfig.franchisor_name,
     franchise_name: franchiseName,
     api_key: franchisorConfig.api_key,
     active: franchisorConfig.active,
-    credentials: franchiseOverrides.credentials,
+    credentials: {
+      ...franchiseOverrides.credentials,
+      base_url: systemConfig.better_crm_base_url,
+    },
     config: {
       notification_settings: franchiseOverrides?.config?.notification_settings || 
                            franchisorConfig.config.notification_settings,

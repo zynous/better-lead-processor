@@ -89,8 +89,6 @@ export const FranchiseConfigSchema = z.object({
     credentials: z.object({
       client_id: z.string(),
       client_secret: z.string(),
-      base_url: z.string(),
-      oauth_endpoint: z.string(),
     }),
     config: z.object({
       notification_settings: z.object({
@@ -107,10 +105,11 @@ export const FranchiseConfigSchema = z.object({
 
 export type FranchiseConfig = z.infer<typeof FranchiseConfigSchema> & { franchise_name?: string };
 
-// System Config Schema (LLM API Key + Logging + SES + Region)
+// System Config Schema (LLM API key, Better CRM base URL, logging, SES, region)
 export const SystemConfigSchema = z.object({
   llm_api_key: z.string(),
   llm_provider: z.string().optional(),
+  better_crm_base_url: z.string(),
   aws_region: z.string().optional(),
   ses_from_email: z.string().optional(),
   logging: z.object({

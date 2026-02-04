@@ -193,6 +193,15 @@ export async function handler(
   } catch (error) {
     logger.error('Error processing lead', { requestId }, error as Error);
 
+    // LLM rejected: required fields (first/last/business/email) missing — return 400, no notification
+    if (
+      error instanceof Error &&
+      error.message.startsWith(ERROR_MESSAGES.LLM_REJECT_PREFIX)
+    ) {
+      const message = error.message.slice(ERROR_MESSAGES.LLM_REJECT_PREFIX.length);
+      return createErrorResponse(400, message, 'VALIDATION_ERROR');
+    }
+
     // Try to send failure notification if we have config loaded
     try {
       const pathParams = event.pathParameters;

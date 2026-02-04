@@ -15,7 +15,6 @@ interface FranchiseConfigWithCredentials {
     client_id: string;
     client_secret: string;
     base_url: string;
-    oauth_endpoint: string;
   };
 }
 
@@ -56,7 +55,8 @@ export class BetterCRMService {
       franchiseName: this.config.franchise_name,
     });
 
-    const oauthEndpoint = this.config.credentials.oauth_endpoint;
+    const baseUrl = this.config.credentials.base_url.replace(/\/$/, '');
+    const oauthEndpoint = `${baseUrl}/oauth/access_token`;
     const clientId = this.config.credentials.client_id;
     const clientSecret = this.config.credentials.client_secret;
 
@@ -115,7 +115,7 @@ export class BetterCRMService {
    */
   async createLead(lead: BetterCRMLead): Promise<number> {
     const accessToken = await this.getAccessToken();
-    const baseUrl = this.config.credentials.base_url;
+    const baseUrl = this.config.credentials.base_url.replace(/\/$/, '');
     const createLeadUrl = `${baseUrl}/v2/crm/lead`;
 
     logger.info('Creating lead in Better CRM', {
