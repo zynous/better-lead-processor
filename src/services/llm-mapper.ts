@@ -42,6 +42,8 @@ export class LLMMapperService {
     /**
      * Allowed Better CRM fields (WHITELIST)
      * The model may ONLY use these paths.
+     * 
+     * TODO: check what are required field by system, I am sure first_name and last_name are required.
      */
     // Build the prompt with Better CRM API structure and input data
     const betterCRMStructure = `{
@@ -114,7 +116,7 @@ RULES (NON-NEGOTIABLE):
 - Do NOT include a field unless its value exists in the input.
 - You may ONLY use the allowed Better CRM fields listed below for profile, information, address, interaction.
 - Any input field that does NOT map to one of those allowed Better CRM fields MUST be put in the "note" field.
-- In "note", put unmappable fields as key=value, one per line. Format: key1=value1 then newline key2=value2 (e.g. customSource=web, utm_campaign=summer).
+- In "note", put unmappable fields as key=value, one per line. Format: key1 = value1 then newline key2 =v alue2 (e.g. customSource = web\nutm_campaign = summer).
 - Missing data is acceptable. Invention is NOT.
 - Output MUST be valid JSON.
 - Output MUST include a top-level "profile" object (it may be empty).

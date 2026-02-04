@@ -59,19 +59,39 @@ export function validatePathParameters(pathParameters: unknown): {
 }
 
 /**
- * Validate request body JSON
- * Attempts to parse the body as JSON
+ * Validate request body JSON and ensure it's a valid lead data object
+ * Parses JSON and validates it's an object structure
  */
 export function validateRequestBody(body: string | null): {
   valid: true;
-  data: Record<string, unknown>;
+  data: LeadData;
 } | {
   valid: false;
   error: APIGatewayProxyResult;
 } {
   try {
     const requestBody = body ? JSON.parse(body) : {};
-    return { valid: true, data: requestBody };
+    
+    // Validate it's an object (not array, null, or primitive)
+    const result = LeadDataSchema.safeParse(requestBody);
+    
+    if (!result.success) {
+      return {
+        valid: false,
+        error: {
+          statusCode: 400,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            success: false,
+            error: ERROR_MESSAGES.INVALID_LEAD_DATA,
+            error_type: 'VALIDATION_ERROR',
+            processed_at: new Date().toISOString(),
+          }),
+        },
+      };
+    }
+    
+    return { valid: true, data: result.data };
   } catch (error) {
     return {
       valid: false,
@@ -87,37 +107,5 @@ export function validateRequestBody(body: string | null): {
       },
     };
   }
-}
-
-/**
- * Validate and parse lead data
- * Validates against LeadDataSchema using Zod
- */
-export function validateLeadData(data: unknown): {
-  valid: true;
-  data: LeadData;
-} | {
-  valid: false;
-  error: APIGatewayProxyResult;
-} {
-  const result = LeadDataSchema.safeParse(data);
-
-  if (!result.success) {
-    return {
-      valid: false,
-      error: {
-        statusCode: 400,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          success: false,
-          error: ERROR_MESSAGES.INVALID_LEAD_DATA,
-          error_type: 'VALIDATION_ERROR',
-          processed_at: new Date().toISOString(),
-        }),
-      },
-    };
-  }
-
-  return { valid: true, data: result.data };
 }
 
