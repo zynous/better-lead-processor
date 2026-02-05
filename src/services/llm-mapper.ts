@@ -92,21 +92,17 @@ export class LLMMapperService {
         "business_name": "string (optional) — Company or business name",
         "phone": [
           {
-            "id": "string (optional) — Phone record ID for edits only",
-            "formatted": "string (required in array) — Full phone number as displayed",
-            "type": "string (optional: mobile, home, work) — Phone type",
-            "country_code": "string (optional) — Dialing code ",
-            "extension": "string (optional) — Extension number"
+            "formatted": "string (required in array) - The actual phone number would be in this field",
+            "type": "string (optional: mobile, home, work)",
+            "country_code": "string (optional)",
+            "extension": "string (optional)"
           }
         ],
-        "email_address": "string (optional) — Lead's email; must be valid email format",
-        "identification": "string (optional) — ID number, license, or similar identifier",
-        "allow_calls": "boolean (optional) — Consent or preference for phone contact",
-        "allow_marketing_email": "boolean (optional) — Consent for marketing emails",
-        "role_description": "string (optional) — Job title or role",
-        "is-enabled_email": "boolean (optional) — Email contact enabled flag",
-        "is-enabled_sms": "boolean (optional) — SMS contact enabled flag",
-        "preferred_pronouns": "string (optional) — e.g. he/she/they/etc."
+        "email_address": "string (email, optional)",
+        "role_description": "string (optional)",
+        "is-enabled_email": "string (optional)",
+        "is-enabled_sms": "string (optional)",
+        "preferred_pronouns": "string (optional)"
       },
       "information": {
         "account_owner": "string or number (optional) — Owner/user ID in CRM",
