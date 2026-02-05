@@ -6,7 +6,7 @@ import { LLMMapperService } from './services/llm-mapper';
 import { sendFailureNotification } from './services/email';
 import { logger, LogConfig } from './utils';
 import { lookupFranchiseByPostalCode } from './handlers';
-import { validatePathParameters, validateRequestBody, validateLeadData } from './validators';
+import { validatePathParameters, validateRequestBody } from './validators';
 import { ERROR_MESSAGES } from './error-messages';
 
 /**
@@ -111,19 +111,13 @@ export async function handler(
     const franchisorName = pathValidation.franchisorName;
     let franchiseName = pathValidation.franchiseName;
 
-    // Validate request body
+    // Validate and parse request body
     const bodyValidation = validateRequestBody(event.body);
     if (!bodyValidation.valid) {
       return bodyValidation.error;
     }
 
-    // Validate and parse lead data
-    const leadValidation = validateLeadData(bodyValidation.data);
-    if (!leadValidation.valid) {
-      return leadValidation.error;
-    }
-
-    const leadData = leadValidation.data;
+    const leadData = bodyValidation.data;
 
     logger.info('Input request lead data received', {
       requestId,
@@ -135,7 +129,7 @@ export async function handler(
     // Handle endpoint 2: postal code to franchise mapping
     if (!franchiseName) {
       const result = await lookupFranchiseByPostalCode(franchisorName, leadData, requestId);
-      
+
       if ('error' in result) {
         // Try to send failure notification for postal code lookup failure
         try {
@@ -154,7 +148,7 @@ export async function handler(
         }
         return result.error;
       }
-      
+
       franchiseName = result.franchiseName;
     }
 
@@ -198,6 +192,15 @@ export async function handler(
     return createSuccessResponse(leadId, franchisorName, franchiseName);
   } catch (error) {
     logger.error('Error processing lead', { requestId }, error as Error);
+
+    // LLM rejected: required fields (first/last/business/email) missing — return 400, no notification
+    if (
+      error instanceof Error &&
+      error.message.startsWith(ERROR_MESSAGES.LLM_REJECT_PREFIX)
+    ) {
+      const message = error.message.slice(ERROR_MESSAGES.LLM_REJECT_PREFIX.length);
+      return createErrorResponse(400, message, 'VALIDATION_ERROR');
+    }
 
     // Try to send failure notification if we have config loaded
     try {

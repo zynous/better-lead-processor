@@ -5,61 +5,66 @@ import { ERROR_MESSAGES } from '../error-messages';
 
 /**
  * FSA (Forward Sortation Area) to Franchise Name Mapping
- * Maps the first 3 characters of Canadian postal codes to franchise names.
+ * Keyed by franchisor name so multiple franchisors can have their own mappings.
+ * Each franchisor maps the first 3 characters of Canadian postal codes (FSA) to franchise names.
  * Includes L-prefix (standard) and digit-first aliases (1C0, 2L0, 1TO, etc.) for alternate input formats.
  */
-const FSA_TO_FRANCHISE_MAPPING: Record<string, string> = {
-  'L4M': 'barrie',
-  'L4N': 'barrie',
-  'L9J': 'barrie',
-  'L3Z': 'bradford',
-  'L9N': 'east gwillimbury',
-  'L4P': 'keswick',
-  'L9R': 'alliston',
-  'L9S': 'innisfil',
-  'L1S': 'ajax',
-  'L1T': 'ajax',
-  'L1Z': 'ajax',
-  'L1B': 'bowmanville',
-  'L1C': 'bowmanville',
-  'L1E': 'bowmanville',
-  'L1V': 'pickering',
-  'L1W': 'pickering',
-  'L1X': 'pickering',
-  'L1Y': 'pickering',
-  'L1A': 'port hope',
-  'L9L': 'port perry',
-  'L9P': 'uxbridge',
-  'L9T': 'uxbridge',
-  'L1M': 'whitby',
-  'L1N': 'whitby',
-  'L1P': 'whitby',
-  'L1R': 'whitby',
-  'L1G': 'oshawa',
-  'L1H': 'oshawa',
-  'L1J': 'oshawa',
-  'L1K': 'oshawa',
-  'L1L': 'oshawa',
-  'L2L': 'barrie',
-  'L2N': 'barrie',
-  '1C0': 'bowmanville',
-  '1K0': 'oshawa',
-  '1L0': 'oshawa',
-  '1N0': 'whitby',
-  '1R0': 'whitby',
-  '1W0': 'pickering',
-  '1P0': 'whitby',
-  '1A0': 'port hope',
-  '1E0': 'bowmanville',
-  '1S0': 'ajax',
-  '1T0': 'ajax',
-  '1B0': 'bowmanville',
-  '1G0': 'oshawa',
-  '1J0': 'oshawa',
-  '1M0': 'whitby',
-  '1TO': 'uxbridge',
-  '2L0': 'barrie',
-  '2N0': 'barrie',
+const FSA_TO_FRANCHISE_MAPPING: Record<string, Record<string, string>> = {
+  'lice-squad': {
+    "L1S": "durham",
+    "L1T": "durham",
+    "L1Z": "durham",
+    "L1V": "durham",
+    "L1W": "durham",
+    "L1X": "durham",
+    "L1Y": "durham",
+    "L1M": "durham",
+    "L1N": "durham",
+    "L1P": "durham",
+    "L1R": "durham",
+    "L1G": "durham",
+    "L1H": "durham",
+    "L1J": "durham",
+    "L1K": "durham",
+    "L1L": "durham",
+    "L1B": "durham",
+    "L1C": "durham",
+    "L1E": "durham",
+    "L1A": "durham",
+    "L9L": "durham",
+    "L9P": "durham",
+    "L0A": "durham",
+    "L0B": "durham",
+    "L0C": "durham",
+    "L0E": "barrie",
+    "L0G": "barrie",
+    "L0L": "barrie",
+    "L0M": "barrie",
+    "L0N": "barrie",
+    "L3Z": "barrie",
+    "L4M": "barrie",
+    "L4N": "barrie",
+    "L4P": "barrie",
+    "L9J": "barrie",
+    "L9N": "barrie",
+    "L9R": "barrie",
+    "L9S": "barrie",
+    "1C0": "barrie",
+    "1K0": "barrie",
+    "1L0": "barrie",
+    "1N0": "barrie",
+    "1R0": "barrie",
+    "1W0": "barrie",
+    "2L0": "barrie",
+    "2N0": "barrie",
+    "1A0": "barrie",
+    "1B0": "barrie",
+    "1TO": "barrie",
+    "1G0": "barrie",
+    "1J0": "barrie",
+    "1M0": "barrie",
+    "1T0": "barrie",
+  },
 };
 
 /**
@@ -72,7 +77,7 @@ export async function lookupFranchiseByPostalCode(
   requestId: string
 ): Promise<{ franchiseName: string } | { error: APIGatewayProxyResult }> {
   try {
-    logger.info('Endpoint 2: Mapping postal code to franchise', { requestId, franchisorName });
+    logger.info('Mapping postal code to franchise', { requestId, franchisorName });
 
     // Extract postal code from request
     const postalCode = extractPostalCode(leadData);
@@ -111,7 +116,25 @@ export async function lookupFranchiseByPostalCode(
     }
 
     const fsa = normalizedCode.substring(0, 3);
-    const franchiseName = FSA_TO_FRANCHISE_MAPPING[fsa];
+    const franchisorMapping = FSA_TO_FRANCHISE_MAPPING[franchisorName];
+
+    if (!franchisorMapping) {
+      logger.warn('Postal code mapping not configured for franchisor', { requestId, franchisorName });
+      return {
+        error: {
+          statusCode: 404,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            success: false,
+            error: ERROR_MESSAGES.POSTAL_CODE_MAPPING_NOT_SUPPORTED,
+            error_type: 'NOT_FOUND',
+            processed_at: new Date().toISOString(),
+          }),
+        },
+      };
+    }
+
+    const franchiseName = franchisorMapping[fsa];
 
     if (!franchiseName) {
       logger.warn('FSA not found in mapping', { requestId, postalCode, fsa, franchisorName });

@@ -43,10 +43,9 @@ const context = {
 function buildEvent(body, apiKey = '550e8400-e29b-41d4-a716-546655440000') {
   return {
     httpMethod: 'POST',
-    path: '/api/v1/better-lead-processor/lice-squad/barrie',
+    path: '/api/v1/better-lead-processor/lice-squad',
     pathParameters: {
-      'franchisor-name': 'lice-squad',
-      'franchise-name': 'barrie',
+      'franchisor-name': 'lice-squad'
     },
     headers: {
       'Content-Type': 'application/json',
@@ -91,9 +90,11 @@ async function runTest() {
 
   try {
     const result = await handler(event, context);
-    console.log('✅ Success!');
-    console.log('Response:', JSON.stringify(JSON.parse(result.body), null, 2));
-    console.log('Status Code:', result.statusCode);
+    const status = result.statusCode;
+    const body = JSON.parse(result.body);
+    console.log(status >= 200 && status < 300 ? '✅ Success!' : status >= 400 ? '⚠️ Client/Server error (expected for some cases)' : 'Response');
+    console.log('Status Code:', status);
+    console.log('Response:', JSON.stringify(body, null, 2));
   } catch (error) {
     console.error('❌ Error:', error.message);
     console.error('Stack:', error.stack);
