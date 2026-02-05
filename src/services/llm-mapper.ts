@@ -10,6 +10,46 @@ import {
 import { logger } from '../utils';
 import { ERROR_MESSAGES } from '../error-messages';
 
+/** Throws if lead has none of first_name, last_name, business_name, email_address (used for 400 validation). */
+function checkRequiredFields(lead: BetterCRMLead): void {
+  const first = lead.profile?.first_name?.trim();
+  const last = lead.profile?.last_name?.trim();
+  const business = lead.profile?.business_name?.trim();
+  const email = lead.profile?.email_address?.trim();
+  if (first || last || business || email) return;
+  throw new Error(
+    `${ERROR_MESSAGES.LLM_REJECT_PREFIX}${ERROR_MESSAGES.REQUIRED_FIELDS_MISSING}`
+  );
+}
+
+/** Normalize phone (default type=mobile, country_code=1) and address (fill CRM-required fields with N/A if partial). */
+function postProcessLead(lead: BetterCRMLead): BetterCRMLead {
+  const out = { ...lead };
+
+  const phones = out.profile?.phone;
+  if (phones?.length) {
+    out.profile = { ...out.profile };
+    out.profile!.phone = phones.map((p) => ({
+      ...p,
+      type: p.type?.trim() || 'mobile',
+      country_code: p.country_code?.trim() || '1',
+    }));
+  }
+
+  if (out.address) {
+    out.address = {
+      ...out.address,
+      deliveryAddress: out.address.deliveryAddress?.trim() || 'N/A',
+      city: out.address.city?.trim() || 'N/A',
+      province: out.address.province?.trim() || 'N/A',
+      country: out.address.country?.trim() || 'N/A',
+      postalCode: out.address.postalCode?.trim() || 'N/A',
+    };
+  }
+
+  return out;
+}
+
 /**
  * Hallucination-safe, CRM-aware LLM mapper
  *
@@ -109,17 +149,13 @@ export class LLMMapperService {
         'system',
         `You transform input lead data into the Better CRM Lead format. Map by meaning: match input fields to the correct output fields by what they represent, not by exact key names. Use the allowed fields below only.
 
-REQUIRED-FIELDS CHECK FIRST: The input must contain at least one of: first name, last name, business/company name, or email (in any key or form). If none of these are present, output exactly: {{"_reject": true, "_reject_reason": "At least one of: first_name, last_name, business_name and email_address must be provided"}}.
-
 MAPPING:
 - Map input to output by semantics. Different input keys can map to the same output (e.g. address, street, address1 → address block; firstName, first_name, name → first_name). Use only values from the input; do not invent data.
 - If an input value clearly contains multiple pieces of information (e.g. one string with street, city, province, postal), parse it into the right output fields. Use the exact substrings from the input.
-- Only put in "note" input that has no corresponding lead API field (e.g. utm_campaign, referral, customSource, campaign_id). Anything that is clearly name, contact, or address must be mapped to profile/information/address, not to note.
-- In "note", format unmappable fields as key=value, one per line.
+- Only put in "note" input that has no corresponding lead API field. Anything that is clearly name, contact, or address must be mapped to profile/information/address, not to note.
+- In "note", format unmappable fields as key=value, one per line. 
 
-ADDRESS: The CRM requires that if ANY address field is present, ALL of line 1 (deliveryAddress), city, state/province, country, and zip/postalCode must be present. When the input gives you all five (e.g. one string like "100 Main Street Barrie, ON, Canada" that you parse into street/city/province/country plus a separate postalCode, or separate address fields), you MUST include the "address" object and map them; do not put address data in "note". Only when the input has partial address (e.g. only postal code, or only street with no city/country/zip) do you omit "address" and put what you have in "note" instead.
-
-OUTPUT: Valid JSON only. Include a top-level "profile" object (may be empty), unless rejecting for missing required fields. Use only the allowed Better CRM fields listed below.
+OUTPUT: Valid JSON only. Include a top-level "profile" object (may be empty). Use only the allowed Better CRM fields listed below.
 
 Allowed Better CRM fields:
 {betterCRMStructure}`,
@@ -157,30 +193,22 @@ Return ONLY JSON. No explanations.`,
         throw new Error(ERROR_MESSAGES.LLM_MAPPING_FAILED);
       }
 
-      // LLM rejected: required fields (first/last/business/email) missing in input
-      if (
-        parsed &&
-        typeof parsed === 'object' &&
-        (parsed as Record<string, unknown>)._reject === true
-      ) {
-        const reason =
-          (parsed as Record<string, unknown>)._reject_reason ||
-          ERROR_MESSAGES.REQUIRED_FIELDS_MISSING;
-        throw new Error(
-          `${ERROR_MESSAGES.LLM_REJECT_PREFIX}${typeof reason === 'string' ? reason : ERROR_MESSAGES.REQUIRED_FIELDS_MISSING}`
-        );
-      }
-
       // ✅ Final authority: schema validation
       const validated = BetterCRMLeadSchema.parse(parsed);
+
+      // Post-process: required-fields check (return 400 if none present)
+      checkRequiredFields(validated);
+
+      // Post-process: normalize phone (default type=mobile, country_code=1) and address (fill missing with N/A)
+      const processed = postProcessLead(validated);
 
       logger.info('LLM mapping completed successfully', {
         franchisorName: this.franchiseConfig.franchisor_name,
         franchiseName: this.franchiseConfig.franchise_name,
-        fieldsReturned: Object.keys(validated),
+        fieldsReturned: Object.keys(processed),
       });
 
-      return validated;
+      return processed;
     } catch (error) {
       // Rethrow required-fields rejection so handler can return 400
       if (
