@@ -126,7 +126,7 @@ export class LLMMapperService {
       "information": {
         "account_owner": "string or number - Owner/user ID in CRM",
         "ageRange": "string - Age range or bracket (options: 0-5, 6-15, 16-30, 31-45, 46-60, 61-75, 76+)",
-        "bio": "string - Biography of the person creating the lead. Not for general information about the lead.",
+        "bio": "string - ONLY biographical info about the lead (e.g. job title, background).",
         "date_of_birth": "string - Date of birth",
         "facebook": "string - Facebook profile URL or handle",
         "gender": "string - Gender (male, female, unspecified, genderqueer/nonbinary)",
@@ -145,7 +145,7 @@ export class LLMMapperService {
         "province": "string - Province, state, or region",
         "country": "string - Country",
         "postalCode": "string - Postal/ZIP code",
-        "description": "string - Address description or label. e.g. "please call before arrival",
+        "description": "string - Address/location/delivery description (e.g. 'right in front', 'back door', 'please call before arrival'). Use for any description that refers to where or how to find the address.",
         "primary_address": "boolean - Marks primary address",
         "service_address": "boolean - Marks service address"
       },

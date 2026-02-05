@@ -39,7 +39,6 @@ Resources:
       Environment:
         Variables:
           NODE_ENV: production
-          SES_FROM_EMAIL: team@zynous.com
       Events:
         ApiEndpoint1:
           Type: Api
