@@ -1,5 +1,5 @@
 {
-  "description": "Input test cases for LLM mapping. Covers field name variations (camelCase, snake_case, etc.) and unmappable fields -> note.",
+  "description": "Input test cases for LLM mapping and post-processing. Covers: field name variations (camelCase, snake_case); profile (name, email, phone, business, identification, allow_*, role_description, preferred_pronouns); information (source_id, website, linkedin, bio, date_of_birth, gender, ageRange, facebook, twitter, mood); address (deliveryAddress, deliveryAddress2, city, province/state, country, postalCode/zip, description, primary_address, service_address); phone (multiple, extension, international); interaction (full: activity_type, dates, event_name, event_description); unmappable -> note; post-process (invalid/empty email, partial address, interaction -> note).",
   "apiKey": "550e8400-e29b-41d4-a716-546655440000",
   "cases": [
     {
@@ -84,7 +84,7 @@
     },
     {
       "id": "information-fields",
-      "description": "Information: source_id, website, linkedin, bio, date_of_birth",
+      "description": "Information: source_id, website, linkedin, bio",
       "input": {
         "firstName": "Grace",
         "lastName": "Kim",
@@ -93,6 +93,171 @@
         "website": "https://gracekim.com",
         "linkedin": "linkedin.com/in/gracekim",
         "bio": "Software developer"
+      }
+    },
+    {
+      "id": "info-date-gender-age",
+      "description": "Information: date_of_birth, gender, ageRange",
+      "input": {
+        "firstName": "Sam",
+        "lastName": "Lee",
+        "email": "sam@example.com",
+        "date_of_birth": "1990-05-15",
+        "gender": "male",
+        "ageRange": "30-39"
+      }
+    },
+    {
+      "id": "info-social",
+      "description": "Information: facebook, twitter",
+      "input": {
+        "firstName": "Social",
+        "lastName": "User",
+        "email": "social@example.com",
+        "facebook": "fb.com/socialuser",
+        "twitter": "@socialuser"
+      }
+    },
+    {
+      "id": "info-mood",
+      "description": "Information: mood",
+      "input": {
+        "firstName": "Mood",
+        "lastName": "Test",
+        "email": "mood@example.com",
+        "mood": "interested"
+      }
+    },
+    {
+      "id": "profile-pronouns-prefs",
+      "description": "Profile: preferred_pronouns, allow_email, allow_sms",
+      "input": {
+        "firstName": "Pronoun",
+        "lastName": "User",
+        "email": "pronoun@example.com",
+        "preferred_pronouns": "they/them",
+        "allow_email": "yes",
+        "allow_sms": "no"
+      }
+    },
+    {
+      "id": "address-state",
+      "description": "Address: state instead of province",
+      "input": {
+        "firstName": "State",
+        "lastName": "User",
+        "email": "state@example.com",
+        "city": "Dallas",
+        "state": "TX",
+        "country": "USA",
+        "zip": "75001"
+      }
+    },
+    {
+      "id": "address-primary-service",
+      "description": "Address: primary_address, service_address flags",
+      "input": {
+        "firstName": "Addr",
+        "lastName": "Flags",
+        "email": "flags@example.com",
+        "deliveryAddress": "100 Main St",
+        "city": "Toronto",
+        "province": "ON",
+        "country": "Canada",
+        "postalCode": "M5V 1A1",
+        "primary_address": true,
+        "service_address": false
+      }
+    },
+    {
+      "id": "phone-multiple",
+      "description": "Multiple phones: cell and work",
+      "input": {
+        "firstName": "Dual",
+        "lastName": "Phone",
+        "email": "dual@example.com",
+        "phone": "+1-416-555-1111",
+        "workPhone": "+1-416-555-2222"
+      }
+    },
+    {
+      "id": "phone-extension",
+      "description": "Phone with extension",
+      "input": {
+        "firstName": "Ext",
+        "lastName": "User",
+        "email": "ext@example.com",
+        "phone": "416-555-3333",
+        "extension": "101"
+      }
+    },
+    {
+      "id": "phone-international",
+      "description": "International phone: +44 UK",
+      "input": {
+        "firstName": "UK",
+        "lastName": "Lead",
+        "email": "uk@example.com",
+        "phone": "+44 20 7946 0958"
+      }
+    },
+    {
+      "id": "interaction-full",
+      "description": "Full interaction: event_name, event_description, end_date",
+      "input": {
+        "firstName": "Meeting",
+        "lastName": "Lead",
+        "email": "meeting@example.com",
+        "activityType": "meeting",
+        "interactionDate": "2025-02-15T10:00:00Z",
+        "end_date": "2025-02-15T11:00:00Z",
+        "event_name": "Discovery call",
+        "event_description": "Initial qualification"
+      }
+    },
+    {
+      "id": "email-plus-addressing",
+      "description": "Valid email with plus addressing",
+      "input": {
+        "firstName": "Plus",
+        "lastName": "Email",
+        "email": "user+tag@example.com",
+        "phone": "416-555-4444"
+      }
+    },
+    {
+      "id": "zip-only",
+      "description": "Address with zip (not postalCode)",
+      "input": {
+        "firstName": "Zip",
+        "lastName": "Only",
+        "email": "zip@example.com",
+        "city": "Austin",
+        "state": "TX",
+        "zip": "78701"
+      }
+    },
+    {
+      "id": "first-name-only",
+      "description": "Only firstName provided (minimal identity)",
+      "input": {
+        "firstName": "OnlyFirst",
+        "email": "onlyfirst@example.com"
+      }
+    },
+    {
+      "id": "address-description-valid",
+      "description": "Address description that fits (building/suite)",
+      "input": {
+        "firstName": "Suite",
+        "lastName": "Lead",
+        "email": "suite@example.com",
+        "deliveryAddress": "200 Bay St",
+        "city": "Toronto",
+        "province": "ON",
+        "country": "Canada",
+        "postalCode": "M5J 2J2",
+        "description": "Suite 1200, North Tower"
       }
     },
     {
@@ -146,15 +311,134 @@
       }
     },
     {
+      "id": "postprocess-invalid-email",
+      "description": "Invalid email: post-process moves to note, removes from profile",
+      "input": {
+        "firstName": "Post",
+        "lastName": "Process",
+        "email": "not-an-email",
+        "phone": "+1-416-555-1000"
+      }
+    },
+    {
+      "id": "postprocess-empty-email",
+      "description": "Empty email: post-process moves to note",
+      "input": {
+        "firstName": "Empty",
+        "lastName": "Email",
+        "email": "",
+        "phone": "+1-416-555-1001"
+      }
+    },
+    {
+      "id": "postprocess-partial-address",
+      "description": "Partial address (city + province only): post-process fills rest with Unknown",
+      "input": {
+        "firstName": "Partial",
+        "lastName": "Address",
+        "email": "partial@example.com",
+        "city": "Toronto",
+        "province": "ON"
+      }
+    },
+    {
+      "id": "postprocess-address-only-city",
+      "description": "Address with only city: post-process fills deliveryAddress, province, country, postalCode with Unknown",
+      "input": {
+        "firstName": "City",
+        "lastName": "Only",
+        "email": "cityonly@example.com",
+        "city": "Barrie"
+      }
+    },
+    {
+      "id": "postprocess-interaction",
+      "description": "Interaction-like data: post-process moves to note, removes block to avoid CRM 500",
+      "input": {
+        "firstName": "Call",
+        "lastName": "Lead",
+        "email": "call@example.com",
+        "activityType": "call",
+        "interactionDate": "2025-02-10T14:00:00Z"
+      }
+    },
+    {
+      "id": "postprocess-last-and-email-only",
+      "description": "No first name but last name + email: post-process may set first_name when no other identity",
+      "input": {
+        "lastName": "Solo",
+        "email": "solo@example.com"
+      }
+    },
+    {
+      "id": "postprocess-minimal-valid",
+      "description": "Minimal valid: baseline that should pass",
+      "input": {
+        "firstName": "Min",
+        "lastName": "Valid",
+        "email": "min@example.com"
+      }
+    },
+    {
+      "id": "postprocess-full-address",
+      "description": "Full address: no post-process fix needed",
+      "input": {
+        "firstName": "Full",
+        "lastName": "Addr",
+        "email": "fulladdr@example.com",
+        "deliveryAddress": "500 Front St",
+        "city": "Toronto",
+        "province": "ON",
+        "country": "Canada",
+        "postalCode": "M5V 1A1"
+      }
+    },
+    {
+      "id": "postprocess-unmappable-and-invalid-email",
+      "description": "Valid identity + unmappable + invalid email: post-process fixes email",
+      "input": {
+        "firstName": "Mix",
+        "lastName": "Fix",
+        "email": "badformat",
+        "utm_source": "test",
+        "campaign": "postprocess-test"
+      }
+    },
+    {
+      "id": "postprocess-no-first-name-business-email",
+      "description": "Business name + email only (no first/last): post-process handles identity",
+      "input": {
+        "businessName": "Biz Only Inc",
+        "email": "biz@example.com"
+      }
+    },
+    {
       "id": "required-fields-missing",
       "description": "No first/last/business/email — LLM should reject with 400",
       "input": {
-        "firstName": "Kate",
         "phone": "416-555-0600",
         "postalCode": "L1J 1A1",
         "customSource": "landing-page",
         "utm_campaign": "summer-2025",
         "referral": "google"
+      }
+    },
+    {
+      "id": "deep3-input",
+      "description": "Deep3 input — invalid email janeexample.com; post-process moves to note",
+      "input": {
+        "firstName": "Deep3",
+        "lastName": "Smith",
+        "email": "janeexample.com",
+        "postalCode": "L4M0K1",
+        "intel": ["food", "fire"],
+        "product_categories": ["none"],
+        "website": "z.api",
+        "address1": "111 canada dr",
+        "area": "vaughan",
+        "description": "right in front",
+        "eventTime": "evenings",
+        "note": "These is my note for the Deep2"
       }
     }
   ]

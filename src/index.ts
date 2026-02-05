@@ -1,13 +1,35 @@
 import { APIGatewayProxyResult } from 'aws-lambda';
-import { LambdaEvent, LambdaContext, SuccessResponse, ErrorResponse } from './types';
+import { InvokeCommand, LambdaClient } from '@aws-sdk/client-lambda';
+import {
+  LambdaEvent,
+  LambdaContext,
+  SuccessResponse,
+  ErrorResponse,
+  AsyncLeadPayload,
+  BetterCRMLeadSchema,
+} from './types';
 import { getFranchiseConfig, getFranchisorConfig, getSystemConfig } from './services/secrets-manager';
 import { BetterCRMService } from './services/better-crm';
 import { LLMMapperService } from './services/llm-mapper';
+import { postProcessLead } from './services/lead-post-processor';
 import { sendFailureNotification } from './services/email';
 import { logger, LogConfig } from './utils';
 import { lookupFranchiseByPostalCode } from './handlers';
 import { validatePathParameters, validateRequestBody } from './validators';
 import { ERROR_MESSAGES } from './error-messages';
+
+function isAsyncPayload(event: LambdaEvent | AsyncLeadPayload): event is AsyncLeadPayload {
+  const e = event as unknown as { _async?: unknown; requestId?: unknown; franchisorName?: unknown; franchiseName?: unknown; leadData?: unknown };
+  return (
+    e != null &&
+    typeof e === 'object' &&
+    e._async === true &&
+    e.requestId != null &&
+    e.franchisorName != null &&
+    e.franchiseName != null &&
+    e.leadData != null
+  );
+}
 
 /**
  * Extract API key from request (header or query parameter)
@@ -38,7 +60,7 @@ function validateApiKey(apiKey: string | null, expectedApiKey: string | undefine
 }
 
 /**
- * Create success response
+ * Create success response with lead_id (used in sync mode, e.g. local testing).
  */
 function createSuccessResponse(leadId: number, franchisorName: string, franchiseName: string): APIGatewayProxyResult {
   const response: SuccessResponse = {
@@ -49,13 +71,28 @@ function createSuccessResponse(leadId: number, franchisorName: string, franchise
     message: 'Lead processed successfully',
     processed_at: new Date().toISOString(),
   };
+  return {
+    statusCode: 202,
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(response),
+  };
+}
 
+/**
+ * Create 202 Accepted response when lead is queued for async processing (no lead_id yet).
+ */
+function createAcceptedResponse(requestId: string): APIGatewayProxyResult {
   return {
     statusCode: 202,
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify(response),
+    body: JSON.stringify({
+      success: true,
+      message: 'Lead accepted for processing',
+      request_id: requestId,
+      processed_at: new Date().toISOString(),
+    }),
   };
 }
 
@@ -86,24 +123,83 @@ function createErrorResponse(
 }
 
 /**
- * Main Lambda handler
+ * Run LLM → post-process → CRM (used by async invocation). Sends failure notification on error.
+ */
+async function processLeadAsync(payload: AsyncLeadPayload, _context: LambdaContext): Promise<void> {
+  const { requestId, franchisorName, franchiseName, leadData } = payload;
+
+  try {
+    const systemConfig = await getSystemConfig();
+    if (systemConfig.logging) {
+      logger.configure(systemConfig.logging as LogConfig);
+    }
+    logger.info('Async processing started', { requestId, franchisorName, franchiseName });
+
+    const franchiseConfig = await getFranchiseConfig(franchisorName, franchiseName);
+    const llmMapper = new LLMMapperService(systemConfig, franchiseConfig);
+    const mappedLead = await llmMapper.mapLeadData(leadData);
+    const normalizedLead = postProcessLead(mappedLead);
+    const betterCRMLead = BetterCRMLeadSchema.parse(normalizedLead);
+    const betterCRMService = new BetterCRMService(franchiseConfig);
+    const leadId = await betterCRMService.createLead(betterCRMLead);
+
+    logger.info('Lead processed successfully (async)', {
+      requestId,
+      franchisorName,
+      franchiseName,
+      leadId,
+    });
+  } catch (error) {
+    logger.error('Error processing lead (async)', { requestId }, error as Error);
+
+    if (
+      error instanceof Error &&
+      error.message.startsWith(ERROR_MESSAGES.LLM_REJECT_PREFIX)
+    ) {
+      return;
+    }
+
+    try {
+      const franchiseConfig = await getFranchiseConfig(franchisorName, franchiseName);
+      if (franchiseConfig.config.notification_settings.email_on_failure) {
+        const errorReason = error instanceof Error ? error.message : String(error);
+        await sendFailureNotification(
+          franchiseConfig.config.notification_settings.notification_emails,
+          franchisorName,
+          franchiseName,
+          errorReason,
+          leadData
+        );
+      }
+    } catch (notificationError) {
+      logger.error('Failed to send notification', { requestId }, notificationError as Error);
+    }
+  }
+}
+
+/**
+ * Main Lambda handler. Accepts API requests (validate → invoke async → 202) or async payload (process only).
  */
 export async function handler(
-  event: LambdaEvent,
+  event: LambdaEvent | AsyncLeadPayload,
   context: LambdaContext
 ): Promise<APIGatewayProxyResult> {
   const requestId = context.awsRequestId;
 
   try {
-    // Load system config to initialize logging
     const systemConfig = await getSystemConfig();
     if (systemConfig.logging) {
       logger.configure(systemConfig.logging as LogConfig);
     }
 
+    if (isAsyncPayload(event)) {
+      await processLeadAsync(event, context);
+      return { statusCode: 200, headers: {}, body: '' };
+    }
+
+    const apiEvent = event as LambdaEvent;
     logger.info('Request received', { requestId });
-    // Validate path parameters
-    const pathValidation = validatePathParameters(event.pathParameters);
+    const pathValidation = validatePathParameters(apiEvent.pathParameters);
     if (!pathValidation.valid) {
       return pathValidation.error;
     }
@@ -126,7 +222,6 @@ export async function handler(
       inputLeadData: leadData,
     });
 
-    // Handle endpoint 2: postal code to franchise mapping
     if (!franchiseName) {
       const result = await lookupFranchiseByPostalCode(franchisorName, leadData, requestId);
 
@@ -152,48 +247,56 @@ export async function handler(
       franchiseName = result.franchiseName;
     }
 
-    // Load franchise configuration
     logger.info('Loading franchise configuration', { requestId, franchisorName, franchiseName });
     const franchiseConfig = await getFranchiseConfig(franchisorName, franchiseName);
 
-    // Validate API key
-    const apiKey = extractApiKey(event);
+    const apiKey = extractApiKey(apiEvent);
     if (!validateApiKey(apiKey, franchiseConfig.api_key)) {
       logger.warn('Invalid API key', { requestId, franchisorName, franchiseName });
       return createErrorResponse(401, ERROR_MESSAGES.INVALID_API_KEY, 'AUTH_ERROR');
     }
 
-    // Check if franchise is active
     if (!franchiseConfig.active) {
       logger.warn('Franchise is not active', { requestId, franchisorName, franchiseName });
       return createErrorResponse(403, ERROR_MESSAGES.FRANCHISE_NOT_ACTIVE, 'AUTH_ERROR');
     }
 
-    // Get LLM API key from system config
-    const llmConfig = await getSystemConfig();
+    const functionName = process.env.AWS_LAMBDA_FUNCTION_NAME;
+    const syncMode = !functionName || process.env.LEAD_PROCESSOR_ASYNC === '0';
 
-    // Map lead data using LLM
-    logger.info('Mapping lead data with LLM', { requestId, franchisorName, franchiseName });
-    const llmMapper = new LLMMapperService(llmConfig, franchiseConfig);
-    const betterCRMLead = await llmMapper.mapLeadData(leadData);
+    if (syncMode) {
+      const llmConfig = await getSystemConfig();
+      const llmMapper = new LLMMapperService(llmConfig, franchiseConfig);
+      const mappedLead = await llmMapper.mapLeadData(leadData);
+      const normalizedLead = postProcessLead(mappedLead);
+      const betterCRMLead = BetterCRMLeadSchema.parse(normalizedLead);
+      const betterCRMService = new BetterCRMService(franchiseConfig);
+      const leadId = await betterCRMService.createLead(betterCRMLead);
+      logger.info('Lead processed successfully (sync)', { requestId, franchisorName, franchiseName, leadId });
+      return createSuccessResponse(leadId, franchisorName, franchiseName);
+    }
 
-    // Create lead in Better CRM
-    logger.info('Creating lead in Better CRM', { requestId, franchisorName, franchiseName });
-    const betterCRMService = new BetterCRMService(franchiseConfig);
-    const leadId = await betterCRMService.createLead(betterCRMLead);
-
-    logger.info('Lead processed successfully', {
+    const asyncPayload: AsyncLeadPayload = {
+      _async: true,
       requestId,
       franchisorName,
       franchiseName,
-      leadId,
-    });
+      leadData,
+    };
+    const lambda = new LambdaClient({});
+    await lambda.send(
+      new InvokeCommand({
+        FunctionName: functionName,
+        InvocationType: 'Event',
+        Payload: JSON.stringify(asyncPayload),
+      })
+    );
 
-    return createSuccessResponse(leadId, franchisorName, franchiseName);
+    logger.info('Lead accepted for async processing', { requestId, franchisorName, franchiseName });
+    return createAcceptedResponse(requestId);
   } catch (error) {
     logger.error('Error processing lead', { requestId }, error as Error);
 
-    // LLM rejected: required fields (first/last/business/email) missing — return 400, no notification
     if (
       error instanceof Error &&
       error.message.startsWith(ERROR_MESSAGES.LLM_REJECT_PREFIX)
@@ -202,9 +305,9 @@ export async function handler(
       return createErrorResponse(400, message, 'VALIDATION_ERROR');
     }
 
-    // Try to send failure notification if we have config loaded
     try {
-      const pathParams = event.pathParameters;
+      const apiEvent = event as LambdaEvent;
+      const pathParams = apiEvent.pathParameters;
       if (pathParams?.['franchisor-name'] && pathParams?.['franchise-name']) {
         const franchiseConfig = await getFranchiseConfig(
           pathParams['franchisor-name'],
@@ -212,19 +315,14 @@ export async function handler(
         );
 
         if (franchiseConfig.config.notification_settings.email_on_failure) {
-          // Use actual error message for email so recipients see the real failure reason
-          const errorReason =
-            error instanceof Error ? error.message : String(error);
-
-          // Get request body from event
+          const errorReason = error instanceof Error ? error.message : String(error);
           let requestBody: unknown = null;
           try {
-            if (event.body) {
-              requestBody = JSON.parse(event.body);
+            if (apiEvent.body) {
+              requestBody = JSON.parse(apiEvent.body);
             }
           } catch {
-            // If parsing fails, use raw body
-            requestBody = event.body;
+            requestBody = apiEvent.body;
           }
 
           await sendFailureNotification(
@@ -240,7 +338,6 @@ export async function handler(
       logger.error('Failed to send notification', { requestId }, notificationError as Error);
     }
 
-    // Never expose internal error details to API consumers
     return createErrorResponse(
       500,
       ERROR_MESSAGES.INTERNAL_SERVER_ERROR,

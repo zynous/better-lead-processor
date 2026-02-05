@@ -1,0 +1,449 @@
+{
+  "description": "Extensive test cases for Better CRM Lead API v2. First block: discover mandatory identity (empty, single fields, combinations). All other field tests include a baseline mandatory profile (first_name + last_name + email_address) so rejections can be attributed to the field under test, not missing identity.",
+  "cases": [
+    {
+      "id": "empty-body",
+      "description": "Completely empty body {}",
+      "payload": {}
+    },
+    {
+      "id": "profile-empty",
+      "description": "Only profile object, no fields",
+      "payload": { "profile": {} }
+    },
+    {
+      "id": "first-name-only",
+      "description": "Only first_name",
+      "payload": { "profile": { "first_name": "TestFirst" } }
+    },
+    {
+      "id": "last-name-only",
+      "description": "Only last_name",
+      "payload": { "profile": { "last_name": "TestLast" } }
+    },
+    {
+      "id": "business-name-only",
+      "description": "Only business_name",
+      "payload": { "profile": { "business_name": "Test Business Inc" } }
+    },
+    {
+      "id": "email-only-valid",
+      "description": "Only email_address (valid)",
+      "payload": { "profile": { "first_name": "TestFirst", "email_address": "probe-valid@example.com" } }
+    },
+    {
+      "id": "email-only-invalid",
+      "description": "Only email_address (invalid format)",
+      "payload": { "profile": { "email_address": "not-an-email" } }
+    },
+    {
+      "id": "email-only-empty",
+      "description": "Only email_address (empty string)",
+      "payload": { "profile": { "email_address": "" } }
+    },
+    {
+      "id": "phone-only",
+      "description": "Only phone (single entry)",
+      "payload": { "profile": { "phone": [{ "formatted": "+1-416-555-0100" }] } }
+    },
+    {
+      "id": "phone-empty-array",
+      "description": "Only phone (empty array)",
+      "payload": { "profile": { "phone": [] } }
+    },
+    {
+      "id": "first-and-last",
+      "description": "first_name + last_name",
+      "payload": { "profile": { "first_name": "TestFirst", "last_name": "TestLast" } }
+    },
+    {
+      "id": "first-name-plus-email-valid",
+      "description": "[first_name required] first_name + email valid – isolate email acceptance",
+      "payload": { "profile": { "first_name": "TestFirst", "email_address": "probe-valid@example.com" } }
+    },
+    {
+      "id": "first-name-plus-email-invalid",
+      "description": "[first_name required] first_name + email invalid format – isolate email validation error",
+      "payload": { "profile": { "first_name": "TestFirst", "email_address": "not-an-email" } }
+    },
+    {
+      "id": "first-name-plus-email-empty",
+      "description": "[first_name required] first_name + email empty string – isolate empty email rule",
+      "payload": { "profile": { "first_name": "TestFirst", "email_address": "" } }
+    },
+    {
+      "id": "first-name-only-no-email",
+      "description": "[first_name required] first_name only, no email – is email optional?",
+      "payload": { "profile": { "first_name": "TestFirst" } }
+    },
+    {
+      "id": "first-name-plus-phone-empty-array",
+      "description": "[first_name required] first_name + phone empty array – isolate phone rule",
+      "payload": { "profile": { "first_name": "TestFirst", "phone": [] } }
+    },
+    {
+      "id": "first-name-plus-phone-valid",
+      "description": "[first_name required] first_name + phone single valid formatted",
+      "payload": { "profile": { "first_name": "TestFirst", "phone": [{ "formatted": "+1-416-555-0100" }] } }
+    },
+    {
+      "id": "first-name-plus-phone-missing-formatted",
+      "description": "[first_name required] first_name + phone entry without formatted (only type)",
+      "payload": { "profile": { "first_name": "TestFirst", "phone": [{ "type": "mobile" }] } }
+    },
+    {
+      "id": "first-name-plus-phone-empty-formatted",
+      "description": "[first_name required] first_name + phone formatted empty string",
+      "payload": { "profile": { "first_name": "TestFirst", "phone": [{ "formatted": "" }] } }
+    },
+    {
+      "id": "first-name-plus-phone-invalid-formatted",
+      "description": "[first_name required] first_name + phone formatted non-number literal",
+      "payload": { "profile": { "first_name": "TestFirst", "phone": [{ "formatted": "not-a-number" }] } }
+    },
+    {
+      "id": "first-name-plus-phone-type-mobile",
+      "description": "[first_name required] first_name + phone type mobile",
+      "payload": { "profile": { "first_name": "TestFirst", "phone": [{ "formatted": "+1-416-555-0100", "type": "mobile" }] } }
+    },
+    {
+      "id": "first-name-plus-phone-type-home",
+      "description": "[first_name required] first_name + phone type home",
+      "payload": { "profile": { "first_name": "TestFirst", "phone": [{ "formatted": "+1-416-555-0200", "type": "home" }] } }
+    },
+    {
+      "id": "first-name-plus-phone-type-work",
+      "description": "[first_name required] first_name + phone type work",
+      "payload": { "profile": { "first_name": "TestFirst", "phone": [{ "formatted": "+1-416-555-0300", "type": "work" }] } }
+    },
+    {
+      "id": "first-name-plus-phone-type-invalid",
+      "description": "[first_name required] first_name + phone type invalid (not cell/work/fax/home/phone/other)",
+      "payload": { "profile": { "first_name": "TestFirst", "phone": [{ "formatted": "+1-416-555-0301", "type": "invalid_type" }] } }
+    },
+    {
+      "id": "first-name-plus-phone-country-code",
+      "description": "[first_name required] first_name + phone with country_code",
+      "payload": { "profile": { "first_name": "TestFirst", "phone": [{ "formatted": "+1-416-555-0400", "country_code": "1" }] } }
+    },
+    {
+      "id": "first-name-plus-phone-extension",
+      "description": "[first_name required] first_name + phone with extension",
+      "payload": { "profile": { "first_name": "TestFirst", "phone": [{ "formatted": "+1-416-555-0500", "extension": "101" }] } }
+    },
+    {
+      "id": "first-name-plus-phone-two-entries",
+      "description": "[first_name required] first_name + phone two entries",
+      "payload": { "profile": { "first_name": "TestFirst", "phone": [{ "formatted": "+1-416-555-0600", "type": "mobile" }, { "formatted": "+1-416-555-0601", "type": "work" }] } }
+    },
+    {
+      "id": "first-name-plus-phone-with-id",
+      "description": "[first_name required] first_name + phone entry with id field",
+      "payload": { "profile": { "first_name": "TestFirst", "phone": [{ "id": "ph-1", "formatted": "+1-416-555-0700" }] } }
+    },
+    {
+      "id": "first-name-no-phone-key",
+      "description": "[first_name required] first_name only, no phone key – is phone optional?",
+      "payload": { "profile": { "first_name": "TestFirst" } }
+    },
+    {
+      "id": "first-and-email",
+      "description": "first_name + email_address",
+      "payload": { "profile": { "first_name": "TestFirst", "email_address": "first.email@example.com" } }
+    },
+    {
+      "id": "first-and-business",
+      "description": "first_name + business_name",
+      "payload": { "profile": { "first_name": "TestFirst", "business_name": "First Biz" } }
+    },
+    {
+      "id": "last-and-email",
+      "description": "last_name + email_address",
+      "payload": { "profile": { "last_name": "TestLast", "email_address": "last.email@example.com" } }
+    },
+    {
+      "id": "last-and-business",
+      "description": "last_name + business_name",
+      "payload": { "profile": { "last_name": "TestLast", "business_name": "Last Biz" } }
+    },
+    {
+      "id": "email-and-business",
+      "description": "email_address + business_name",
+      "payload": { "profile": { "email_address": "biz@example.com", "business_name": "Biz Only" } }
+    },
+    {
+      "id": "first-last-email",
+      "description": "first_name + last_name + email_address",
+      "payload": { "profile": { "first_name": "TestFirst", "last_name": "TestLast", "email_address": "probe@example.com" } }
+    },
+    {
+      "id": "first-last-business",
+      "description": "first_name + last_name + business_name",
+      "payload": { "profile": { "first_name": "TestFirst", "last_name": "TestLast", "business_name": "Full Biz" } }
+    },
+    {
+      "id": "first-email-business",
+      "description": "first_name + email_address + business_name",
+      "payload": { "profile": { "first_name": "TestFirst", "email_address": "probe@example.com", "business_name": "Biz" } }
+    },
+    {
+      "id": "last-email-business",
+      "description": "last_name + email_address + business_name",
+      "payload": { "profile": { "last_name": "TestLast", "email_address": "probe@example.com", "business_name": "Biz" } }
+    },
+    {
+      "id": "first-last-email-business",
+      "description": "All four identifiers: first_name + last_name + email + business_name",
+      "payload": { "profile": { "first_name": "TestFirst", "last_name": "TestLast", "email_address": "probe@example.com", "business_name": "Full Biz" } }
+    },
+    {
+      "id": "first-last-email-phone",
+      "description": "first_name + last_name + email + phone",
+      "payload": { "profile": { "first_name": "TestFirst", "last_name": "TestLast", "email_address": "probe@example.com", "phone": [{ "formatted": "+1-416-555-0200" }] } }
+    },
+    {
+      "id": "first-name-empty-string",
+      "description": "first_name empty string, last_name and email present",
+      "payload": { "profile": { "first_name": "", "last_name": "TestLast", "email_address": "probe@example.com" } }
+    },
+    {
+      "id": "email-minimal-valid",
+      "description": "Minimal valid email format a@b.co",
+      "payload": { "profile": { "first_name": "A", "last_name": "B", "email_address": "a@b.co" } }
+    },
+    {
+      "id": "address-omit",
+      "description": "No address block (profile only)",
+      "payload": { "profile": { "first_name": "NoAddr", "last_name": "User", "email_address": "noaddr@example.com" } }
+    },
+    {
+      "id": "address-only-delivery",
+      "description": "Address with only deliveryAddress",
+      "payload": { "profile": { "first_name": "Addr", "last_name": "One", "email_address": "addr1@example.com" }, "address": { "deliveryAddress": "100 Main St" } }
+    },
+    {
+      "id": "address-only-city",
+      "description": "Address with only city",
+      "payload": { "profile": { "first_name": "Addr", "last_name": "City", "email_address": "addr2@example.com" }, "address": { "city": "Toronto" } }
+    },
+    {
+      "id": "address-delivery-and-city",
+      "description": "Address: deliveryAddress + city",
+      "payload": { "profile": { "first_name": "Addr", "last_name": "Two", "email_address": "addr3@example.com" }, "address": { "deliveryAddress": "200 King St", "city": "Toronto" } }
+    },
+    {
+      "id": "address-delivery-city-province",
+      "description": "Address: deliveryAddress + city + province",
+      "payload": { "profile": { "first_name": "Addr", "last_name": "Three", "email_address": "addr4@example.com" }, "address": { "deliveryAddress": "300 Queen St", "city": "Toronto", "province": "ON" } }
+    },
+    {
+      "id": "address-delivery-city-province-country",
+      "description": "Address: deliveryAddress + city + province + country",
+      "payload": { "profile": { "first_name": "Addr", "last_name": "Four", "email_address": "addr5@example.com" }, "address": { "deliveryAddress": "400 Bay St", "city": "Toronto", "province": "ON", "country": "Canada" } }
+    },
+    {
+      "id": "address-full",
+      "description": "Address: all fields including postalCode, deliveryAddress2",
+      "payload": { "profile": { "first_name": "Addr", "last_name": "Full", "email_address": "addr6@example.com" }, "address": { "deliveryAddress": "500 Front St", "deliveryAddress2": "Suite 1", "city": "Toronto", "province": "ON", "country": "Canada", "postalCode": "M5V 1A1" } }
+    },
+    {
+      "id": "address-only-postal",
+      "description": "Address with only postalCode (no street/city)",
+      "payload": { "profile": { "first_name": "Addr", "last_name": "Postal", "email_address": "addr7@example.com" }, "address": { "postalCode": "M5V 1A1" } }
+    },
+    {
+      "id": "note-only-with-profile",
+      "description": "Profile + note only",
+      "payload": { "profile": { "first_name": "Note", "last_name": "User", "email_address": "note@example.com" }, "note": "Probe note text" } },
+    {
+      "id": "information-source-id",
+      "description": "Profile + information.source_id",
+      "payload": { "profile": { "first_name": "Info", "last_name": "User", "email_address": "info@example.com" }, "information": { "source_id": "probe-123" } }
+    },
+    {
+      "id": "information-website",
+      "description": "Profile + information.website",
+      "payload": { "profile": { "first_name": "Web", "last_name": "User", "email_address": "web@example.com" }, "information": { "website": "https://example.com" } }
+    },
+    {
+      "id": "information-only-no-profile-identifiers",
+      "description": "Only information block, no profile identifiers (stress test)",
+      "payload": { "information": { "source_id": "orphan", "website": "https://orphan.com" } }
+    },
+    {
+      "id": "interaction-call",
+      "description": "Profile + interaction activity_type call",
+      "payload": { "profile": { "first_name": "Call", "last_name": "User", "email_address": "call@example.com" }, "interaction": { "activity_type": "call", "interaction_date": "2025-02-05T12:00:00Z" } }
+    },
+    {
+      "id": "interaction-meeting",
+      "description": "Profile + interaction activity_type meeting",
+      "payload": { "profile": { "first_name": "Meet", "last_name": "User", "email_address": "meet@example.com" }, "interaction": { "activity_type": "meeting" } }
+    },
+    {
+      "id": "profile-allow-calls-marketing",
+      "description": "Profile with allow_calls and allow_marketing_email",
+      "payload": { "profile": { "first_name": "Perm", "last_name": "User", "email_address": "perm@example.com", "allow_calls": "yes", "allow_marketing_email": "no" } }
+    },
+    {
+      "id": "profile-identification-role",
+      "description": "Profile with identification and role_description",
+      "payload": { "profile": { "first_name": "Role", "last_name": "User", "email_address": "role@example.com", "identification": "ID-001", "role_description": "Manager" } }
+    },
+    {
+      "id": "phone-multiple",
+      "description": "Profile with multiple phone entries",
+      "payload": { "profile": { "first_name": "Multi", "last_name": "Phone", "email_address": "multi@example.com", "phone": [{ "formatted": "+1-416-555-0001", "type": "mobile" }, { "formatted": "+1-416-555-0002", "type": "work" }] } }
+    },
+    {
+      "id": "gender-unspecified",
+      "description": "Profile + information.gender unspecified",
+      "payload": { "profile": { "first_name": "Gen", "last_name": "User", "email_address": "gen@example.com" }, "information": { "gender": "unspecified" } }
+    },
+    {
+      "id": "gender-male",
+      "description": "Profile + information.gender male",
+      "payload": { "profile": { "first_name": "Male", "last_name": "User", "email_address": "male@example.com" }, "information": { "gender": "male" } }
+    },
+    {
+      "id": "whitespace-first-name",
+      "description": "first_name and last_name with leading/trailing spaces",
+      "payload": { "profile": { "first_name": "  Trim  ", "last_name": "  Me  ", "email_address": "trim@example.com" } }
+    },
+    {
+      "id": "very-long-first-name",
+      "description": "Very long first_name (e.g. 500 chars)",
+      "payload": { "profile": { "first_name": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", "last_name": "Short", "email_address": "long@example.com" } }
+    },
+    {
+      "id": "special-chars-name",
+      "description": "Special characters in name: O'Brien, José, 中文",
+      "payload": { "profile": { "first_name": "José O'Brien", "last_name": "中文", "email_address": "special@example.com" } }
+    },
+    {
+      "id": "numeric-first-name",
+      "description": "Numeric-looking first_name (string)",
+      "payload": { "profile": { "first_name": "12345", "last_name": "User", "email_address": "num@example.com" } }
+    },
+    {
+      "id": "with-preferred-pronouns",
+      "description": "[baseline] profile.preferred_pronouns",
+      "payload": { "profile": { "first_name": "Base", "last_name": "User", "email_address": "base@example.com", "preferred_pronouns": "they/them" } }
+    },
+    {
+      "id": "with-is-enabled-email",
+      "description": "[baseline] profile.is-enabled_email",
+      "payload": { "profile": { "first_name": "Base", "last_name": "User", "email_address": "base@example.com", "is-enabled_email": "true" } }
+    },
+    {
+      "id": "with-is-enabled-sms",
+      "description": "[baseline] profile.is-enabled_sms",
+      "payload": { "profile": { "first_name": "Base", "last_name": "User", "email_address": "base@example.com", "is-enabled_sms": "true" } }
+    },
+    {
+      "id": "with-identification",
+      "description": "[baseline] profile.identification",
+      "payload": { "profile": { "first_name": "Base", "last_name": "User", "email_address": "base@example.com", "identification": "EXT-001" } }
+    },
+    {
+      "id": "information-account-owner",
+      "description": "[baseline] information.account_owner",
+      "payload": { "profile": { "first_name": "Base", "last_name": "User", "email_address": "base@example.com" }, "information": { "account_owner": "42" } }
+    },
+    {
+      "id": "information-account-owner-number",
+      "description": "[baseline] information.account_owner as number",
+      "payload": { "profile": { "first_name": "Base", "last_name": "User", "email_address": "base@example.com" }, "information": { "account_owner": 42 } }
+    },
+    {
+      "id": "information-age-range",
+      "description": "[baseline] information.ageRange",
+      "payload": { "profile": { "first_name": "Base", "last_name": "User", "email_address": "base@example.com" }, "information": { "ageRange": "25-34" } }
+    },
+    {
+      "id": "information-bio",
+      "description": "[baseline] information.bio",
+      "payload": { "profile": { "first_name": "Base", "last_name": "User", "email_address": "base@example.com" }, "information": { "bio": "Short bio text" } }
+    },
+    {
+      "id": "information-date-of-birth",
+      "description": "[baseline] information.date_of_birth",
+      "payload": { "profile": { "first_name": "Base", "last_name": "User", "email_address": "base@example.com" }, "information": { "date_of_birth": "1990-01-15" } }
+    },
+    {
+      "id": "information-facebook",
+      "description": "[baseline] information.facebook",
+      "payload": { "profile": { "first_name": "Base", "last_name": "User", "email_address": "base@example.com" }, "information": { "facebook": "https://facebook.com/user" } }
+    },
+    {
+      "id": "information-linkedin",
+      "description": "[baseline] information.linkedin",
+      "payload": { "profile": { "first_name": "Base", "last_name": "User", "email_address": "base@example.com" }, "information": { "linkedin": "https://linkedin.com/in/user" } }
+    },
+    {
+      "id": "information-mood",
+      "description": "[baseline] information.mood",
+      "payload": { "profile": { "first_name": "Base", "last_name": "User", "email_address": "base@example.com" }, "information": { "mood": "interested" } }
+    },
+    {
+      "id": "information-twitter",
+      "description": "[baseline] information.twitter",
+      "payload": { "profile": { "first_name": "Base", "last_name": "User", "email_address": "base@example.com" }, "information": { "twitter": "https://twitter.com/user" } }
+    },
+    {
+      "id": "information-product-categories",
+      "description": "[baseline] information.product_categories array",
+      "payload": { "profile": { "first_name": "Base", "last_name": "User", "email_address": "base@example.com" }, "information": { "product_categories": [1, 2] } }
+    },
+    {
+      "id": "information-intel",
+      "description": "[baseline] information.intel array",
+      "payload": { "profile": { "first_name": "Base", "last_name": "User", "email_address": "base@example.com" }, "information": { "intel": [10, 20] } }
+    },
+    {
+      "id": "information-gender-genderqueer",
+      "description": "[baseline] information.gender genderqueer",
+      "payload": { "profile": { "first_name": "Base", "last_name": "User", "email_address": "base@example.com" }, "information": { "gender": "genderqueer" } }
+    },
+    {
+      "id": "information-gender-nonbinary",
+      "description": "[baseline] information.gender nonbinary",
+      "payload": { "profile": { "first_name": "Base", "last_name": "User", "email_address": "base@example.com" }, "information": { "gender": "nonbinary" } }
+    },
+    {
+      "id": "address-description",
+      "description": "[baseline] address.description only",
+      "payload": { "profile": { "first_name": "Base", "last_name": "User", "email_address": "base@example.com" }, "address": { "description": "Home" } }
+    },
+    {
+      "id": "address-primary-address",
+      "description": "[baseline] address.primary_address boolean",
+      "payload": { "profile": { "first_name": "Base", "last_name": "User", "email_address": "base@example.com" }, "address": { "deliveryAddress": "100 Main St", "city": "Toronto", "primary_address": true } }
+    },
+    {
+      "id": "address-service-address",
+      "description": "[baseline] address.service_address boolean",
+      "payload": { "profile": { "first_name": "Base", "last_name": "User", "email_address": "base@example.com" }, "address": { "deliveryAddress": "200 King St", "city": "Toronto", "service_address": true } }
+    },
+    {
+      "id": "interaction-end-date",
+      "description": "[baseline] interaction.end_date",
+      "payload": { "profile": { "first_name": "Base", "last_name": "User", "email_address": "base@example.com" }, "interaction": { "activity_type": "call", "interaction_date": "2025-02-05T12:00:00Z", "end_date": "2025-02-05T12:30:00Z" } }
+    },
+    {
+      "id": "interaction-event-name",
+      "description": "[baseline] interaction.event_name",
+      "payload": { "profile": { "first_name": "Base", "last_name": "User", "email_address": "base@example.com" }, "interaction": { "activity_type": "meeting", "event_name": "Discovery Call" } }
+    },
+    {
+      "id": "interaction-event-description",
+      "description": "[baseline] interaction.event_description",
+      "payload": { "profile": { "first_name": "Base", "last_name": "User", "email_address": "base@example.com" }, "interaction": { "activity_type": "meeting", "event_description": "Initial discovery" } }
+    },
+    {
+      "id": "phone-with-type-country-extension",
+      "description": "[baseline] phone with type, country_code, extension",
+      "payload": { "profile": { "first_name": "Base", "last_name": "User", "email_address": "base@example.com", "phone": [{ "formatted": "+1-416-555-0999", "type": "work", "country_code": "1", "extension": "101" }] } }
+    }
+  ]
+}

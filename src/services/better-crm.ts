@@ -18,6 +18,9 @@ interface FranchiseConfigWithCredentials {
   };
 }
 
+/** HTTP status codes that are typically transient (retry-safe). */
+const TRANSIENT_5XX = [502, 503, 504];
+
 /** Parse Better CRM error response body and return msg if present. */
 function parseBetterCRMMessage(responseText: string): string | null {
   try {
@@ -26,6 +29,10 @@ function parseBetterCRMMessage(responseText: string): string | null {
   } catch {
     return null;
   }
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 /**
@@ -123,42 +130,58 @@ export class BetterCRMService {
       franchiseName: this.config.franchise_name,
     });
 
-    const response = await retry(
-      async () => {
-        const requestBody = JSON.stringify(lead);
-        logger.info('Payload sent to Better CRM lead API', {
-          franchisorName: this.config.franchisor_name,
-          franchiseName: this.config.franchise_name,
-          url: createLeadUrl,
-          payload: requestBody,
-        });
+    const requestBody = JSON.stringify(lead);
+    const maxRetries = 3;
+    let lastResponseText: string | null = null;
 
-        const res = await fetch(createLeadUrl, {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            'Content-Type': 'application/json',
-          },
-          body: requestBody,
-        });
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      logger.info('Payload sent to Better CRM lead API', {
+        franchisorName: this.config.franchisor_name,
+        franchiseName: this.config.franchise_name,
+        url: createLeadUrl,
+        payload: requestBody,
+      });
 
-        const responseText = await res.text();
+      const res = await fetch(createLeadUrl, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: requestBody,
+      });
 
-        if (res.status !== 201) {
-          const apiMsg = parseBetterCRMMessage(responseText);
-          logger.error('Better CRM API error', {
-            status: res.status,
-            statusText: res.statusText,
-            error: responseText,
-            payload: requestBody,
-          });
-          throw new Error(apiMsg || ERROR_MESSAGES.BETTER_CRM_ERROR);
-        }
+      const responseText = await res.text();
+      lastResponseText = responseText;
 
-        return { ok: true, text: responseText };
-      },
-      { maxRetries: 3, initialDelayMs: 1000 }
-    );
+      if (res.status === 201) break;
+
+      const apiMsg = parseBetterCRMMessage(responseText);
+      let crmResponseBody: unknown = responseText;
+      try {
+        crmResponseBody = JSON.parse(responseText) as unknown;
+      } catch {
+        // keep as string if not JSON
+      }
+      logger.error('Better CRM API error', {
+        status: res.status,
+        statusText: res.statusText,
+        crmResponseBody,
+        message: apiMsg ?? undefined,
+        payload: requestBody,
+      });
+
+      // Only retry on transient 5xx (502, 503, 504). 4xx and 500 are not retried.
+      const isTransient = TRANSIENT_5XX.includes(res.status);
+      if (!isTransient || attempt === maxRetries) {
+        throw new Error(apiMsg || ERROR_MESSAGES.BETTER_CRM_ERROR);
+      }
+
+      const delayMs = 1000 * Math.pow(2, attempt);
+      await sleep(delayMs);
+    }
+
+    const response = { ok: true as const, text: lastResponseText! };
 
     const result = JSON.parse(response.text) as {
       code: number;

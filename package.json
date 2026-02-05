@@ -12,6 +12,9 @@
         "test:local:case": "node test/test-local.js",
         "test:mapping": "node test/run-mapping-tests.js",
         "test:compare": "node test/compare-outputs.js",
+        "test:crm-probe": "node test/crm-api-probe.js",
+        "test:llm-crm": "node test/run-llm-crm-tests.js",
+        "test:all-llm": "node test/run-all-through-llm.js",
         "lint": "eslint src --ext .ts",
         "format": "prettier --write \"src/**/*.ts\"",
         "sam:build": "sam build",
@@ -27,6 +30,7 @@
     "author": "",
     "license": "ISC",
     "dependencies": {
+        "@aws-sdk/client-lambda": "^3.983.0",
         "@aws-sdk/client-secrets-manager": "^3.975.0",
         "@aws-sdk/client-ses": "^3.975.0",
         "@langchain/core": "^1.1.0",

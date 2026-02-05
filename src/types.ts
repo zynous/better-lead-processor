@@ -141,6 +141,15 @@ export const ErrorResponseSchema = z.object({
 export type SuccessResponse = z.infer<typeof SuccessResponseSchema>;
 export type ErrorResponse = z.infer<typeof ErrorResponseSchema>;
 
+/** Payload when Lambda is invoked asynchronously (Event); handler runs process-only, no API validation. */
+export interface AsyncLeadPayload {
+  _async: true;
+  requestId: string;
+  franchisorName: string;
+  franchiseName: string;
+  leadData: LeadData;
+}
+
 // Lambda Types
 export interface LambdaEvent extends APIGatewayProxyEvent {
   pathParameters: {

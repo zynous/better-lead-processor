@@ -1,6 +1,6 @@
 /**
  * Run mapping test cases: for each input in input-cases.json, call the LLM mapper
- * (no Lambda handler, no Better CRM) and write results to actual-output.json.
+ * then post-process (no Lambda handler, no Better CRM) and write results to actual-output.json.
  *
  * Prerequisites:
  * - pnpm build
@@ -8,7 +8,8 @@
  *
  * Usage (from project root): node test/run-mapping-tests.js
  *
- * Then compare actual-output.json with expected-output.json (e.g. diff or script).
+ * Then compare with expected: node test/compare-outputs.js
+ * (compares actual-output.json with expected-output.json; expected should be post-processed shape).
  */
 
 const fs = require('fs');
@@ -31,6 +32,7 @@ delete process.env.AWS_LAMBDA_FUNCTION_NAME;
 
 const { getSystemConfig, getFranchiseConfig } = require(path.join(projectRoot, 'dist/services/secrets-manager'));
 const { LLMMapperService } = require(path.join(projectRoot, 'dist/services/llm-mapper'));
+const { postProcessLead } = require(path.join(projectRoot, 'dist/services/lead-post-processor'));
 
 async function runMappingTests() {
   const inputPath = path.join(testDir, 'input-cases.json');
@@ -50,7 +52,7 @@ async function runMappingTests() {
   const mapper = new LLMMapperService(systemConfig, franchiseConfig);
 
   const results = {
-    description: 'Actual mapped output from run-mapping-tests.js. Compare with expected-output.json.',
+    description: 'Actual output (LLM + post-process) from run-mapping-tests.js. Compare with expected-output.json via compare-outputs.js.',
     runAt: new Date().toISOString(),
     cases: [],
   };
@@ -63,7 +65,8 @@ async function runMappingTests() {
 
     process.stdout.write(`  [${i + 1}/${cases.length}] ${id} ... `);
     try {
-      const output = await mapper.mapLeadData(input);
+      const mapped = await mapper.mapLeadData(input);
+      const output = postProcessLead(mapped);
       results.cases.push({
         id,
         description,

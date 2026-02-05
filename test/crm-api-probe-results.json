@@ -1,0 +1,19 @@
+{
+  "runAt": "2026-02-05T17:41:58.458Z",
+  "baseUrl": "https://api.bprobeta.com",
+  "franchisor": "lice-squad",
+  "franchise": "barrie",
+  "total": 1,
+  "accepted": 1,
+  "rejected": 0,
+  "results": [
+    {
+      "id": "email-only-valid",
+      "description": "Only email_address (valid)",
+      "status": 201,
+      "bodyCode": 201,
+      "success": true,
+      "apiMessage": "Successfully created lead"
+    }
+  ]
+}
