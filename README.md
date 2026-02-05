@@ -130,10 +130,10 @@ sam local start-api
 Example request:
 
 ```bash
-curl -X POST http://localhost:3000/api/v1/better-lead-processor/lice-squad/barrie \
+curl -s -w "\n\nHTTP %{http_code}\n" -X POST "https://integration.zynous.com/api/v1/better-lead-processor/lice-squad/barrie" \
   -H "Content-Type: application/json" \
-  -H "X-API-Key: YOUR_API_KEY" \
-  -d '{"firstName":"John","lastName":"Doe","email":"john@example.com","phone":"+1-555-123-4567","postalCode":"L4M 1A1"}'
+  -H "X-API-Key: 550e8400-e29b-41d4-a716-546655440000" \
+  -d '{"firstName":"Test","lastName":"User","email":"test@example.com","phone":"416-555-0100"}'
 ```
 
 Use the same path and body shape as production; only the base URL and (for local) API key in config differ.
