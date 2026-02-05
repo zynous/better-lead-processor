@@ -51,17 +51,13 @@ export class LLMMapperService {
         "business_name": "string (optional)",
         "phone": [
           {
-            "id": "string (optional, for edits)",
-            "formatted": "string (required in array)",
+            "formatted": "string (required in array) - The actual phone number would be in this field",
             "type": "string (optional: mobile, home, work)",
             "country_code": "string (optional)",
             "extension": "string (optional)"
           }
         ],
         "email_address": "string (email, optional)",
-        "identification": "string (optional)",
-        "allow_calls": "string (optional)",
-        "allow_marketing_email": "string (optional)",
         "role_description": "string (optional)",
         "is-enabled_email": "string (optional)",
         "is-enabled_sms": "string (optional)",
@@ -83,12 +79,12 @@ export class LLMMapperService {
         "intel": ["array of IDs (optional)"]
       },
       "address": {
-        "deliveryAddress": "string (optional but recommended)",
+        "deliveryAddress": "string (optional)",
         "deliveryAddress2": "string (optional)",
-        "city": "string (optional but recommended)",
-        "province": "string (optional but recommended)",
-        "country": "string (optional but recommended)",
-        "postalCode": "string (optional but recommended)",
+        "city": "string (optional)",
+        "province": "string (optional)",
+        "country": "string (optional)",
+        "postalCode": "string (optional)",
         "description": "string (optional)",
         "primary_address": "string or boolean (optional)",
         "service_address": "string or boolean (optional)"
