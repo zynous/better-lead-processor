@@ -19,7 +19,8 @@
         "format": "prettier --write \"src/**/*.ts\"",
         "sam:build": "sam build",
         "sam:local": "sam local invoke LeadProcessor -e",
-        "sam:start-api": "sam local start-api"
+        "sam:start-api": "sam local start-api",
+        "generate-api-key": "node scripts/generate-api-key.js"
     },
     "keywords": [
         "lambda",

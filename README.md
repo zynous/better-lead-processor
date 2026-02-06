@@ -232,6 +232,17 @@ curl -X POST https://integration.zynous.com/api/v1/better-lead-processor/lice-sq
   -H "X-API-Key: YOUR_API_KEY" \
   -d '{"firstName":"Jane","lastName":"Smith","email":"jane@example.com","postalCode":"L4M"}'
 
+# Endpoint 1 (direct franchise) using key in query 
+curl -X POST "https://integration.zynous.com/api/v1/better-lead-processor/lice-squad/barrie?api_key=YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"firstName":"Alice","lastName":"QueryKey","email":"alice@example.com"}'
+
+# Endpoint 2 (postal code lookup) using key in query
+curl -X POST "https://integration.zynous.com/api/v1/better-lead-processor/lice-squad?api_key=YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"firstName":"Jane","lastName":"Smith","email":"jane@example.com","postalCode":"L4M"}'
+
+
 sam logs --stack-name better-lead-processor --tail
 # Errors only: sam logs --stack-name better-lead-processor --tail --filter ERROR
 ```

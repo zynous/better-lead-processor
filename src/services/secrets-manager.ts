@@ -137,6 +137,9 @@ export async function getFranchiseConfig(
   };
   config: FranchiseConfig['config'] & { llm_settings: { model: string; temperature?: number } } 
 }> {
+  const normalizedFranchisor = franchisorName.trim().toLowerCase();
+  const normalizedFranchise = franchiseName.trim().toLowerCase();
+
   let franchisorConfig: FranchiseConfig;
 
   if (IS_LOCAL) {
@@ -148,7 +151,7 @@ export async function getFranchiseConfig(
       '..',
       '..',
       'local-configs',
-      `${franchisorName}.json`
+      `${normalizedFranchisor}.json`
     );
 
     if (!fs.existsSync(configPath)) {
@@ -159,13 +162,16 @@ export async function getFranchiseConfig(
     franchisorConfig = FranchiseConfigSchema.parse(JSON.parse(configContent));
   } else {
     // Load from Secrets Manager
-    const secretName = `better-lead-processor/${franchisorName}`;
+    const secretName = `better-lead-processor/${normalizedFranchisor}`;
     const secretValue = await getSecret(secretName);
     franchisorConfig = FranchiseConfigSchema.parse(JSON.parse(secretValue));
   }
 
-  // Get franchise-specific overrides if they exist
-  const franchiseOverrides = franchisorConfig.franchises?.[franchiseName];
+  // Resolve franchise key case-insensitively (config may use any casing)
+  const franchiseKey = Object.keys(franchisorConfig.franchises ?? {}).find(
+    (k) => k.toLowerCase() === normalizedFranchise
+  );
+  const franchiseOverrides = franchiseKey ? franchisorConfig.franchises?.[franchiseKey] : undefined;
 
   // Get franchise-specific overrides - credentials are required at franchise level
   if (!franchiseOverrides?.credentials) {
@@ -175,9 +181,10 @@ export async function getFranchiseConfig(
   const systemConfig = await getSystemConfig();
 
   // Merge configs: franchisor defaults + franchise overrides; base_url from system config
+  // Use resolved key for franchise_name so casing matches config
   return {
     franchisor_name: franchisorConfig.franchisor_name,
-    franchise_name: franchiseName,
+    franchise_name: franchiseKey ?? normalizedFranchise,
     api_key: franchisorConfig.api_key,
     active: franchisorConfig.active,
     credentials: {
@@ -198,6 +205,8 @@ export async function getFranchiseConfig(
  * Used for postal code mapping lookup
  */
 export async function getFranchisorConfig(franchisorName: string): Promise<FranchiseConfig> {
+  const normalizedFranchisor = franchisorName.trim().toLowerCase();
+
   if (IS_LOCAL) {
     const fs = await import('fs');
     const path = await import('path');
@@ -206,7 +215,7 @@ export async function getFranchisorConfig(franchisorName: string): Promise<Franc
       '..',
       '..',
       'local-configs',
-      `${franchisorName}.json`
+      `${normalizedFranchisor}.json`
     );
 
     if (!fs.existsSync(configPath)) {
@@ -216,7 +225,7 @@ export async function getFranchisorConfig(franchisorName: string): Promise<Franc
     const configContent = fs.readFileSync(configPath, 'utf8');
     return FranchiseConfigSchema.parse(JSON.parse(configContent));
   } else {
-    const secretName = `better-lead-processor/${franchisorName}`;
+    const secretName = `better-lead-processor/${normalizedFranchisor}`;
     const secretValue = await getSecret(secretName);
     return FranchiseConfigSchema.parse(JSON.parse(secretValue));
   }

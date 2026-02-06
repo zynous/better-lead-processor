@@ -1,18 +1,34 @@
 #!/bin/bash
 
 # Deploy Production Configs to AWS Secrets Manager
-# Usage: ./deploy-secrets.sh [--dry-run]
+# Usage: ./deploy-secrets.sh [SECRET_NAME] [--dry-run]
+#   SECRET_NAME  Optional. Deploy only this secret (e.g. app-config, lice-squad, ygm).
+#                Without it, deploys app-config and all franchisor configs.
+#   --dry-run    Show what would be deployed without making changes.
 
 set -e
 
 DRY_RUN=false
+SECRET_NAME=""
 SECRET_PREFIX="better-lead-processor"
 PROD_CONFIGS_DIR="prod-configs"
 
 # Parse arguments
-if [[ "$1" == "--dry-run" ]]; then
-  DRY_RUN=true
+for arg in "$@"; do
+  if [[ "$arg" == "--dry-run" ]]; then
+    DRY_RUN=true
+  elif [[ -n "$arg" && -z "$SECRET_NAME" ]]; then
+    SECRET_NAME="$arg"
+  fi
+done
+
+if [[ "$DRY_RUN" == true ]]; then
   echo "🔍 DRY RUN MODE - No changes will be made"
+fi
+
+# If user passed full secret name (e.g. better-lead-processor/lice-squad), use the suffix
+if [[ "$SECRET_NAME" == "$SECRET_PREFIX"/* ]]; then
+  SECRET_NAME="${SECRET_NAME#$SECRET_PREFIX/}"
 fi
 
 # Check AWS credentials
@@ -35,6 +51,22 @@ echo ""
 if [[ ! -d "$PROD_CONFIGS_DIR" ]]; then
   echo "❌ Error: $PROD_CONFIGS_DIR directory not found"
   exit 1
+fi
+
+# Confirm before making changes (skip in dry-run)
+if [[ "$DRY_RUN" != true ]]; then
+  if [[ -n "$SECRET_NAME" ]]; then
+    echo "Will deploy secret: $SECRET_PREFIX/$SECRET_NAME"
+  else
+    echo "Will deploy all secrets (app-config + all franchisor configs)"
+  fi
+  echo ""
+  read -r -p "Continue? [y/N] " reply
+  if [[ ! "$reply" =~ ^[yY]$ ]]; then
+    echo "Aborted."
+    exit 0
+  fi
+  echo ""
 fi
 
 # Deploy app-config
@@ -88,39 +120,57 @@ deploy_config() {
   echo ""
 }
 
-# Deploy app-config
-echo "📄 Processing app-config..."
-deploy_config "$PROD_CONFIGS_DIR/app-config.json" "$SECRET_PREFIX/app-config"
-
-# Deploy franchisor configs
-echo "🏢 Processing franchisor configs..."
-for franchisor_file in "$PROD_CONFIGS_DIR"/*.json; do
-  # Skip app-config (already processed)
-  if [[ "$(basename "$franchisor_file")" == "app-config.json" ]]; then
-    continue
+if [[ -n "$SECRET_NAME" ]]; then
+  # Deploy only the requested secret
+  if [[ "$SECRET_NAME" == "app-config" ]]; then
+    echo "📄 Deploying app-config..."
+    deploy_config "$PROD_CONFIGS_DIR/app-config.json" "$SECRET_PREFIX/app-config"
+  else
+    config_file="$PROD_CONFIGS_DIR/${SECRET_NAME}.json"
+    if [[ ! -f "$config_file" ]]; then
+      echo "❌ Error: Config file not found: $config_file"
+      exit 1
+    fi
+    echo "🏢 Deploying franchisor config: $SECRET_NAME..."
+    deploy_config "$config_file" "$SECRET_PREFIX/$SECRET_NAME"
   fi
+else
+  # Deploy app-config
+  echo "📄 Processing app-config..."
+  deploy_config "$PROD_CONFIGS_DIR/app-config.json" "$SECRET_PREFIX/app-config"
 
-  # Skip example files
-  if [[ "$(basename "$franchisor_file")" == *.example.json ]]; then
-    continue
-  fi
+  # Deploy franchisor configs
+  echo "🏢 Processing franchisor configs..."
+  for franchisor_file in "$PROD_CONFIGS_DIR"/*.json; do
+    # Skip app-config (already processed)
+    if [[ "$(basename "$franchisor_file")" == "app-config.json" ]]; then
+      continue
+    fi
 
-  franchisor_name=$(basename "$franchisor_file" .json)
-  secret_name="$SECRET_PREFIX/$franchisor_name"
-  
-  deploy_config "$franchisor_file" "$secret_name"
-done
+    # Skip example files
+    if [[ "$(basename "$franchisor_file")" == *.example.json ]]; then
+      continue
+    fi
+
+    franchisor_name=$(basename "$franchisor_file" .json)
+    secret_name="$SECRET_PREFIX/$franchisor_name"
+
+    deploy_config "$franchisor_file" "$secret_name"
+  done
+fi
 
 if [[ "$DRY_RUN" == true ]]; then
   echo "✅ Dry run complete. No changes were made."
 else
-  echo "✅ All secrets deployed successfully!"
-  echo ""
-  echo "📋 Deployed secrets:"
-  aws secretsmanager list-secrets \
-    --filters Key=name,Values="$SECRET_PREFIX" \
-    --region "$AWS_REGION" \
-    --query 'SecretList[].Name' \
-    --output text | tr '\t' '\n' | sed 's/^/   - /'
+  echo "✅ Secret(s) deployed successfully!"
+  if [[ -z "$SECRET_NAME" ]]; then
+    echo ""
+    echo "📋 Deployed secrets:"
+    aws secretsmanager list-secrets \
+      --filters Key=name,Values="$SECRET_PREFIX" \
+      --region "$AWS_REGION" \
+      --query 'SecretList[].Name' \
+      --output text | tr '\t' '\n' | sed 's/^/   - /'
+  fi
 fi
 

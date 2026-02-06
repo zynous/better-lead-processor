@@ -116,7 +116,10 @@ export async function lookupFranchiseByPostalCode(
     }
 
     const fsa = normalizedCode.substring(0, 3);
-    const franchisorMapping = FSA_TO_FRANCHISE_MAPPING[franchisorName];
+    const franchisorKey = Object.keys(FSA_TO_FRANCHISE_MAPPING).find(
+      (k) => k.toLowerCase() === franchisorName.toLowerCase()
+    );
+    const franchisorMapping = franchisorKey ? FSA_TO_FRANCHISE_MAPPING[franchisorKey] : undefined;
 
     if (!franchisorMapping) {
       logger.warn('Postal code mapping not configured for franchisor', { requestId, franchisorName });
