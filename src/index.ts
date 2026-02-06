@@ -206,9 +206,10 @@ export async function handler(
 
     const franchisorName = pathValidation.franchisorName;
     let franchiseName = pathValidation.franchiseName;
+    const keyToExtractDataFrom = pathValidation.keyToExtractDataFrom;
 
     // Validate and parse request body
-    const bodyValidation = validateRequestBody(event.body);
+    const bodyValidation = validateRequestBody(event.body, keyToExtractDataFrom);
     if (!bodyValidation.valid) {
       return bodyValidation.error;
     }

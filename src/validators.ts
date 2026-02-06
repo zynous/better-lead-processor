@@ -10,6 +10,7 @@ export function validatePathParameters(pathParameters: unknown): {
   valid: true;
   franchisorName: string;
   franchiseName?: string;
+  keyToExtractDataFrom?: string;
 } | {
   valid: false;
   error: APIGatewayProxyResult;
@@ -32,6 +33,7 @@ export function validatePathParameters(pathParameters: unknown): {
 
   const params = pathParameters as Record<string, unknown>;
   const franchisorName = params['franchisor-name'];
+  const keyToExtractDataFrom = params['key-for-data-extraction'] as string | undefined;
 
   if (!franchisorName || typeof franchisorName !== 'string') {
     return {
@@ -55,6 +57,7 @@ export function validatePathParameters(pathParameters: unknown): {
     valid: true,
     franchisorName,
     franchiseName: franchiseName ? String(franchiseName) : undefined,
+    keyToExtractDataFrom: keyToExtractDataFrom,
   };
 }
 
@@ -62,7 +65,7 @@ export function validatePathParameters(pathParameters: unknown): {
  * Validate request body JSON and ensure it's a valid lead data object
  * Parses JSON and validates it's an object structure
  */
-export function validateRequestBody(body: string | null): {
+export function validateRequestBody(body: string | null, keyToExtractDataFrom?: string): {
   valid: true;
   data: LeadData;
 } | {
@@ -71,10 +74,10 @@ export function validateRequestBody(body: string | null): {
 } {
   try {
     const requestBody = body ? JSON.parse(body) : {};
-    
+
     // Validate it's an object (not array, null, or primitive)
     const result = LeadDataSchema.safeParse(requestBody);
-    
+
     if (!result.success) {
       return {
         valid: false,
@@ -90,8 +93,8 @@ export function validateRequestBody(body: string | null): {
         },
       };
     }
-    
-    return { valid: true, data: result.data };
+
+    return { valid: true, data: keyToExtractDataFrom ? result.data[keyToExtractDataFrom] : result.data };
   } catch (error) {
     return {
       valid: false,
