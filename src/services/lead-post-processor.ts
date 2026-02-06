@@ -57,7 +57,7 @@ function normalizePhone(lead: BetterCRMLead): void {
 
   const kept: typeof profile.phone = [];
   const droppedLines: string[] = [];
-  const DEFAULT_COUNTRY_CODE = '+1';
+  const DEFAULT_COUNTRY_CODE = 1;
   for (const entry of profile.phone) {
     if (entry && isNonEmptyString((entry as { formatted?: unknown }).formatted)) {
       const e = entry as Record<string, unknown>;
@@ -77,7 +77,7 @@ function normalizePhone(lead: BetterCRMLead): void {
           ? String(e.country_code).trim()
           : DEFAULT_COUNTRY_CODE;
       const ext = e.extension != null ? String(e.extension) : '';
-      droppedLines.push('phone=' + num + ',' + type + ',' + code + ',' + ext);
+      droppedLines.push('phone = ' + num + ',' + type + ',' + code + ',' + ext);
     }
   }
   if (droppedLines.length > 0) {
