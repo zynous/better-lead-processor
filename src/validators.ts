@@ -51,10 +51,14 @@ export function validatePathParameters(pathParameters: unknown): {
 
   const franchiseName = params['franchise-name'];
 
+  // Normalize to lowercase for case-insensitive lookup
+  const normalizedFranchisor = String(franchisorName).trim().toLowerCase();
+  const normalizedFranchise = franchiseName ? String(franchiseName).trim().toLowerCase() : undefined;
+
   return {
     valid: true,
-    franchisorName,
-    franchiseName: franchiseName ? String(franchiseName) : undefined,
+    franchisorName: normalizedFranchisor,
+    franchiseName: normalizedFranchise,
   };
 }
 
