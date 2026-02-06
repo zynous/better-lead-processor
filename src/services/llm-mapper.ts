@@ -149,7 +149,7 @@ export class LLMMapperService {
         "primary_address": "boolean - Marks primary address",
         "service_address": "boolean - Marks service address"
       },
-      "note": "string - Free-text note; put unmappable input fields here as key=value lines",
+      "note": "string - Free-text note; put unmappable input fields here as <span style="font-size: 18pt;">key = value</span><br /> lines",
       "interaction": {
         "activity_type": "string - Type of interaction (options: Call, Email, Meeting, Task)",
         "interaction_date": "string - Start date/time in UTC",
@@ -180,7 +180,7 @@ CRITICAL:
 MAPPING:
 - Map input to output by semantics. Match by what each field and value represent.
 - If an input value contains multiple pieces of information that fit separate output fields, split it and map each part to the appropriate field. Use exact substrings from the input. Apply confidence per part if needed.
-- Put in "note" anything unmappable, low-confidence, or medium-confidence (for medium, also map). Format note entries as key=value, one per line.
+- Put in "note" anything unmappable, low-confidence, or medium-confidence (for medium, also map). Format note entries as <span style="font-size: 18pt;">key = value</span><br />, one per line.
 - When an input value's type does not match the output field's allowed type, treat as low confidence and put that value in note only.
 
 OUTPUT (SPARSE): Return ONLY the fields you mapped plus "reasoning". Do NOT include the full structure.

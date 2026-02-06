@@ -431,8 +431,13 @@
         "lastName": "Smith",
         "email": "janeexample.com",
         "postalCode": "L4M0K1",
-        "intel": ["food", "fire"],
-        "product_categories": ["none"],
+        "intel": [
+          "food",
+          "fire"
+        ],
+        "product_categories": [
+          "none"
+        ],
         "website": "z.api",
         "address1": "111 canada dr",
         "area": "vaughan",
