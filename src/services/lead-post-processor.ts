@@ -40,7 +40,7 @@ function normalizeEmail(lead: BetterCRMLead): void {
   if (profile.email_address === undefined || profile.email_address === null) return;
   if (!isValidEmail(profile.email_address)) {
     const value = typeof profile.email_address === 'string' ? profile.email_address.trim() : String(profile.email_address);
-    const line = value ? `email=${value}` : 'email=(empty)';
+    const line = value ? `email = ${value}` : 'email = (empty)';
     lead.note = lead.note ? lead.note + '\n' + line : line;
     logger.debug('Lead post-process: moving invalid or empty email_address to note');
     delete profile.email_address;
@@ -106,6 +106,37 @@ function normalizeAddress(lead: BetterCRMLead): void {
 }
 
 /**
+ * Duplicate vague fields (address.description, interaction.event_description) to notes
+ * for preservation since these fields can contain important information.
+ */
+function duplicateVagueFieldsToNote(lead: BetterCRMLead): void {
+  const linesToAdd: string[] = [];
+
+  // Check address.description
+  if (lead.address && typeof lead.address === 'object') {
+    const addr = lead.address as Record<string, unknown>;
+    if (addr.description != null && isNonEmptyString(addr.description)) {
+      linesToAdd.push(`address_description = ${addr.description.trim()}`);
+    }
+  }
+
+  // Check interaction.event_description
+  if (lead.interaction && typeof lead.interaction === 'object') {
+    const interaction = lead.interaction as Record<string, unknown>;
+    if (interaction.event_description != null && isNonEmptyString(interaction.event_description)) {
+      linesToAdd.push(`interaction_event_description = ${interaction.event_description.trim()}`);
+    }
+  }
+
+  // Append to note if we found any
+  if (linesToAdd.length > 0) {
+    const newContent = linesToAdd.join('\n');
+    lead.note = lead.note ? lead.note + '\n' + newContent : newContent;
+    logger.debug('Lead post-process: duplicated vague fields to note', { fields: linesToAdd });
+  }
+}
+
+/**
  * Interaction need  (end_date required for meeting). Move to note and remove block.
  */
 function moveInteractionToNote(lead: BetterCRMLead): void {
@@ -136,6 +167,7 @@ export function postProcessLead(lead: BetterCRMLead): BetterCRMLead {
   normalizeEmail(out);
   normalizePhone(out);
   normalizeAddress(out);
+  duplicateVagueFieldsToNote(out); // Preserve vague fields in notes before any transformations
   moveInteractionToNote(out);
   return out;
 }

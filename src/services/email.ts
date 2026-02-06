@@ -26,7 +26,7 @@ export async function sendFailureNotification(
   const client = new SESClient({ region });
 
   const title = `Lead Processing Failed - ${franchisorName}/${franchiseName}`;
-  
+
   // Prettify JSON request body
   let prettifiedBody = '';
   if (requestBody) {
@@ -40,11 +40,11 @@ export async function sendFailureNotification(
       prettifiedBody = JSON.stringify(requestBody, null, 2);
     }
   }
-  
+
   let body = `
 Hi,
 
-The lead that was submitted from your website was not created on Better CRM successfully. Here is the lead data that was submitted:
+The lead that was submitted from your website was not created on Better CRM. Here is the lead data that was submitted:
 ${prettifiedBody}
 
 Reason: ${reason}`;
