@@ -10,6 +10,12 @@ import * as http from 'http';
 const IS_LOCAL = process.env.AWS_SAM_LOCAL === 'true' || !process.env.AWS_LAMBDA_FUNCTION_NAME;
 const SECRETS_EXTENSION_HTTP_PORT = 2773;
 
+/** When running locally, configs are under project root (use cwd so it works with bundled dist/). */
+function getLocalConfigsDir(): string {
+  const path = require('path');
+  return path.join(process.cwd(), 'local-configs');
+}
+
 // Cache for secrets (Lambda container reuse)
 const secretCache = new Map<string, { value: unknown; timestamp: number }>();
 const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
@@ -143,16 +149,10 @@ export async function getFranchiseConfig(
   let franchisorConfig: FranchiseConfig;
 
   if (IS_LOCAL) {
-    // Load from local franchisor config file
+    // Load from local franchisor config file (use cwd so it works when running from bundled dist/)
     const fs = await import('fs');
     const path = await import('path');
-    const configPath = path.join(
-      __dirname,
-      '..',
-      '..',
-      'local-configs',
-      `${normalizedFranchisor}.json`
-    );
+    const configPath = path.join(getLocalConfigsDir(), `${normalizedFranchisor}.json`);
 
     if (!fs.existsSync(configPath)) {
       throw new Error(`Local franchisor config not found: ${configPath}`);
@@ -210,13 +210,7 @@ export async function getFranchisorConfig(franchisorName: string): Promise<Franc
   if (IS_LOCAL) {
     const fs = await import('fs');
     const path = await import('path');
-    const configPath = path.join(
-      __dirname,
-      '..',
-      '..',
-      'local-configs',
-      `${normalizedFranchisor}.json`
-    );
+    const configPath = path.join(getLocalConfigsDir(), `${normalizedFranchisor}.json`);
 
     if (!fs.existsSync(configPath)) {
       throw new Error(`Local franchisor config not found: ${configPath}`);
@@ -236,10 +230,10 @@ export async function getFranchisorConfig(franchisorName: string): Promise<Franc
  */
 export async function getSystemConfig(): Promise<SystemConfig> {
   if (IS_LOCAL) {
-    // Load from local config file
+    // Load from local config file (use cwd so it works when running from bundled dist/)
     const fs = await import('fs');
     const path = await import('path');
-    const configPath = path.join(__dirname, '..', '..', 'local-configs', 'app-config.json');
+    const configPath = path.join(getLocalConfigsDir(), 'app-config.json');
 
     if (!fs.existsSync(configPath)) {
       throw new Error(`Local system config not found: ${configPath}`);
