@@ -33,7 +33,7 @@ export function validatePathParameters(pathParameters: unknown): {
 
   const params = pathParameters as Record<string, unknown>;
   const franchisorName = params['franchisor-name'];
-  const keyToExtractDataFrom = params['key-for-data-extraction'] as string | undefined;
+  const keyToExtractDataFrom = (params as Record<string, any>)?.['inputLeadData']?.['key-for-data-extraction'] as string | undefined;
 
   if (!franchisorName || typeof franchisorName !== 'string') {
     return {
