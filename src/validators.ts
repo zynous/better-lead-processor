@@ -82,7 +82,7 @@ export function validateRequestBody(body: string | null, keyToExtractDataFrom?: 
     // Validate it's an object (not array, null, or primitive)
     const result = LeadDataSchema.safeParse(requestBody);
 
-    if (!result.success || (keyToExtractDataFrom && !result.data[keyToExtractDataFrom])) {
+    if (!result.success || (keyToExtractDataFrom && !result.data?.[keyToExtractDataFrom])) {
       return {
         valid: false,
         error: {
