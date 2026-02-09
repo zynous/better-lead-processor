@@ -161,10 +161,11 @@ async function processLeadAsync(payload: AsyncLeadPayload, _context: LambdaConte
 
     try {
       const franchiseConfig = await getFranchiseConfig(franchisorName, franchiseName);
-      if (franchiseConfig.config.notification_settings.email_on_failure) {
+      const notif = franchiseConfig.config.notification_settings;
+      if (notif?.email_on_failure && notif.notification_emails?.length) {
         const errorReason = error instanceof Error ? error.message : String(error);
         await sendFailureNotification(
-          franchiseConfig.config.notification_settings.notification_emails,
+          notif.notification_emails,
           franchisorName,
           franchiseName,
           errorReason,
@@ -232,9 +233,10 @@ export async function handler(
         // Try to send failure notification for postal code lookup failure
         try {
           const franchisorConfig = await getFranchisorConfig(franchisorName);
-          if (franchisorConfig.config.notification_settings.email_on_failure) {
+          const notif = franchisorConfig.config.notification_settings;
+          if (notif?.email_on_failure && notif.notification_emails?.length) {
             await sendFailureNotification(
-              franchisorConfig.config.notification_settings.notification_emails,
+              notif.notification_emails,
               franchisorName,
               'unknown',
               ERROR_MESSAGES.EMAIL_REASON_POSTAL_CODE_NOT_FOUND,
@@ -317,7 +319,8 @@ export async function handler(
           pathParams['franchise-name']
         );
 
-        if (franchiseConfig.config.notification_settings.email_on_failure) {
+        const notif = franchiseConfig.config.notification_settings;
+        if (notif?.email_on_failure && notif.notification_emails?.length) {
           const errorReason = error instanceof Error ? error.message : String(error);
           let requestBody: unknown = null;
           try {
@@ -329,7 +332,7 @@ export async function handler(
           }
 
           await sendFailureNotification(
-            franchiseConfig.config.notification_settings.notification_emails,
+            notif.notification_emails,
             franchiseConfig.franchisor_name,
             franchiseConfig.franchise_name,
             errorReason,

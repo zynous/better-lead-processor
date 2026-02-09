@@ -134,14 +134,14 @@ async function getSecret(secretName: string, useExtension = true): Promise<strin
 export async function getFranchiseConfig(
   franchisorName: string,
   franchiseName: string
-): Promise<FranchiseConfig & { 
-  franchise_name: string; 
+): Promise<FranchiseConfig & {
+  franchise_name: string;
   credentials: {
     client_id: string;
     client_secret: string;
     base_url: string;
   };
-  config: FranchiseConfig['config'] & { llm_settings: { model: string; temperature?: number } } 
+  config: FranchiseConfig['config'] & { llm_settings: { model: string; temperature?: number } }
 }> {
   const normalizedFranchisor = franchisorName.trim().toLowerCase();
   const normalizedFranchise = franchiseName.trim().toLowerCase();
@@ -192,10 +192,12 @@ export async function getFranchiseConfig(
       base_url: systemConfig.better_crm_base_url,
     },
     config: {
-      notification_settings: franchiseOverrides?.config?.notification_settings || 
-                           franchisorConfig.config.notification_settings,
-      llm_settings: franchiseOverrides?.config?.llm_settings || 
-                   franchisorConfig.config.llm_settings,
+      notification_settings:
+        franchiseOverrides?.config?.notification_settings ??
+        franchisorConfig.config.notification_settings ??
+        { email_on_failure: false, notification_emails: [] },
+      llm_settings:
+        franchiseOverrides?.config?.llm_settings ?? franchisorConfig.config.llm_settings,
     },
   };
 }
@@ -243,11 +245,14 @@ export async function getSystemConfig(): Promise<SystemConfig> {
     const config = JSON.parse(configContent);
     return SystemConfigSchema.parse(config);
   }
-
-  // Load from Secrets Manager
-  const secretName = 'better-lead-processor/app-config';
-  const secretValue = await getSecret(secretName);
-  const config = JSON.parse(secretValue);
-  return SystemConfigSchema.parse(config);
+  try {
+    const secretName = 'better-lead-processor/app-config';
+    const secretValue = await getSecret(secretName);
+    const config = JSON.parse(secretValue);
+    return SystemConfigSchema.parse(config);
+  } catch (error) {
+    logger.error('Failed to get system config from Secrets Manager', { error }, error as Error);
+    throw error;
+  }
 }
 

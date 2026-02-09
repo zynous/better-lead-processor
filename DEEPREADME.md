@@ -12,5 +12,5 @@
 1. **Secrets:** Put production configs in `prod-configs/` (e.g. `app-config.json`, `{franchisor}.json`). Run `./scripts/deploy-secrets.sh` to push to AWS Secrets Manager.
 2. **Build:** `pnpm build` then `sam build` (use `--use-container` if needed).
 3. **Deploy:** `sam deploy` (first time: `sam deploy --guided`). Use when changing `template.yaml` (infra, throttling, etc.).
-4. **Code-only (faster):** For code/deps only, run `./scripts/deploy-lambda.sh` instead of steps 2–3.
+4. **Code-only (faster):** For code/deps only, run `y` instead of steps 2–3.
 5. **Verify:** Smoke test the live URL (see README) and `sam logs --stack-name better-lead-processor --tail` if needed.

@@ -70,16 +70,29 @@ export const BetterCRMLeadSchema = z.object({
 
 export type BetterCRMLead = z.infer<typeof BetterCRMLeadSchema>;
 
+// Each array element must be a single valid email; invalid/empty entries are filtered out
+const notificationEmailsSchema = z
+  .array(z.string())
+  .transform((arr) => {
+    const emailSchema = z.string().email();
+    return arr.filter((s) => {
+      const trimmed = s.trim();
+      return trimmed.length > 0 && emailSchema.safeParse(trimmed).success;
+    });
+  });
+
+const notificationSettingsSchema = z.object({
+  email_on_failure: z.boolean(),
+  notification_emails: notificationEmailsSchema,
+});
+
 // Franchise Config Schema
 export const FranchiseConfigSchema = z.object({
   franchisor_name: z.string(),
   api_key: z.string().optional(),
   active: z.boolean().default(true),
   config: z.object({
-    notification_settings: z.object({
-      email_on_failure: z.boolean(),
-      notification_emails: z.array(z.string().email()),
-    }),
+    notification_settings: notificationSettingsSchema.optional(),
     llm_settings: z.object({
       model: z.string(),
       temperature: z.number().min(0).max(2).optional(),
@@ -91,10 +104,7 @@ export const FranchiseConfigSchema = z.object({
       client_secret: z.string(),
     }),
     config: z.object({
-      notification_settings: z.object({
-        email_on_failure: z.boolean(),
-        notification_emails: z.array(z.string().email()),
-      }).optional(),
+      notification_settings: notificationSettingsSchema.optional(),
       llm_settings: z.object({
         model: z.string(),
         temperature: z.number().min(0).max(2).optional(),

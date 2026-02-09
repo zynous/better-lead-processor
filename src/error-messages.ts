@@ -1,3 +1,17 @@
+import type { ZodError } from 'zod';
+
+/**
+ * Format a ZodError into a short outline for logging (e.g. when parsing secrets).
+ * Use when catching validation errors from FranchiseConfigSchema / SystemConfigSchema.
+ */
+export function formatZodErrorForSecrets(err: ZodError): string {
+  const lines = err.issues.map((issue) => {
+    const pathStr = issue.path.length ? issue.path.map(String).join('.') : '(root)';
+    return `  - ${pathStr}: ${issue.message}`;
+  });
+  return `Secrets validation failed:\n${lines.join('\n')}`;
+}
+
 /**
  * User-friendly error messages
  * These messages are safe to expose to API consumers and in email notifications
