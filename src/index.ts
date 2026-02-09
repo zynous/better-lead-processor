@@ -15,7 +15,7 @@ import { postProcessLead } from './services/lead-post-processor';
 import { sendFailureNotification } from './services/email';
 import { logger, LogConfig } from './utils';
 import { lookupFranchiseByPostalCode } from './handlers';
-import { validatePathParameters, validateRequestBody } from './validators';
+import { validatePathParameters, validateRequestBody, parseKeysToAvoidForDataExtraction } from './validators';
 import { ERROR_MESSAGES } from './error-messages';
 
 function isAsyncPayload(event: LambdaEvent | AsyncLeadPayload): event is AsyncLeadPayload {
@@ -207,14 +207,16 @@ export async function handler(
 
     const franchisorName = pathValidation.franchisorName;
     let franchiseName = pathValidation.franchiseName;
-    const keyToExtractDataFrom =
-      pathValidation.keyToExtractDataFrom ??
-      apiEvent.queryStringParameters?.['key-for-data-extraction'];
+    const keysToAvoidForDataExtraction =
+      pathValidation.keysToAvoidForDataExtraction ??
+      (apiEvent.queryStringParameters?.['keys-to-avoid-for-data-extractions'] != null
+        ? parseKeysToAvoidForDataExtraction(apiEvent.queryStringParameters['keys-to-avoid-for-data-extractions'])
+        : undefined);
 
     // Validate and parse request body
-    const bodyValidation = validateRequestBody(apiEvent.body, keyToExtractDataFrom);
+    const bodyValidation = validateRequestBody(apiEvent.body, keysToAvoidForDataExtraction);
     if (!bodyValidation.valid) {
-      logger.error('Invalid request body', { requestId, franchisorName, franchiseName, keyToExtractDataFrom, body: apiEvent.body }, new Error(bodyValidation.error.body));
+      logger.error('Invalid request body', { requestId, franchisorName, franchiseName, keysToAvoidForDataExtraction, body: apiEvent.body }, new Error(bodyValidation.error.body));
       return bodyValidation.error;
     }
 

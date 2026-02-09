@@ -71,6 +71,45 @@ const LLMMapperOutputSchema = z.object({
 type LLMMapperOutput = z.infer<typeof LLMMapperOutputSchema>;
 
 /**
+ * Recursively remove null and undefined from an object so the LLM never sees them.
+ * - null/undefined → undefined (omitted from objects, filtered from arrays).
+ * - Plain objects: recurse and omit keys whose stripped value is undefined.
+ * - Non-plain objects (Date, RegExp, etc.): returned as-is.
+ * - Circular references: return {} or [] to avoid stack overflow.
+ */
+function stripNullFromInput(value: unknown, seen = new WeakSet<object>()): unknown {
+  if (value === null || value === undefined) {
+    return undefined;
+  }
+
+  if (Array.isArray(value)) {
+    if (seen.has(value)) return [];
+    seen.add(value);
+    return value
+      .map((item) => stripNullFromInput(item, seen))
+      .filter((item) => item !== undefined);
+  }
+
+  if (typeof value === 'object' && value !== null) {
+    if (value.constructor !== Object) {
+      return value;
+    }
+    if (seen.has(value)) return {};
+    seen.add(value);
+    const out: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(value)) {
+      const stripped = stripNullFromInput(v, seen);
+      if (stripped !== undefined) {
+        out[k] = stripped;
+      }
+    }
+    return out;
+  }
+
+  return value;
+}
+
+/**
  * Hallucination-safe, CRM-aware LLM mapper
  *
  * Strategy:
@@ -96,6 +135,16 @@ export class LLMMapperService {
     logger.info('Starting LLM mapping', {
       franchisorName: this.franchiseConfig.franchisor_name,
       franchiseName: this.franchiseConfig.franchise_name,
+      model: this.franchiseConfig.config.llm_settings.model,
+      inputKeys: Object.keys(inputData),
+    });
+
+    // Strip null/undefined recursively so the LLM never sees them and parsing stays simple
+    const cleanedInput = stripNullFromInput(inputData) as LeadData;
+    logger.info('Input cleaned for LLM (null/undefined stripped)', {
+      franchisorName: this.franchiseConfig.franchisor_name,
+      franchiseName: this.franchiseConfig.franchise_name,
+      cleanedKeys: Object.keys(cleanedInput as Record<string, unknown>),
     });
 
     /**
@@ -211,10 +260,14 @@ Return ONLY JSON. No other text.`,
       });
 
       const messages = await prompt.formatMessages({
-        inputData: JSON.stringify(inputData, null, 2),
+        inputData: JSON.stringify(cleanedInput, null, 2),
         betterCRMStructure,
       });
 
+      logger.info('Invoking LLM for lead mapping', {
+        franchisorName: this.franchiseConfig.franchisor_name,
+        franchiseName: this.franchiseConfig.franchise_name,
+      });
       const parsed: LLMMapperOutput = await structuredLlm.invoke(messages);
 
       logger.info('LLM reasoning', {
