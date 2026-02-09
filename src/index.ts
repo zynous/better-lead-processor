@@ -199,7 +199,7 @@ export async function handler(
     }
 
     const apiEvent = event as LambdaEvent;
-    logger.info('Request received', { requestId });
+    logger.info('Request received', { requestId, body: apiEvent.body });
     const pathValidation = validatePathParameters(apiEvent.pathParameters);
     if (!pathValidation.valid) {
       return pathValidation.error;
@@ -212,8 +212,9 @@ export async function handler(
       apiEvent.queryStringParameters?.['key-for-data-extraction'];
 
     // Validate and parse request body
-    const bodyValidation = validateRequestBody(event.body, keyToExtractDataFrom);
+    const bodyValidation = validateRequestBody(apiEvent.body, keyToExtractDataFrom);
     if (!bodyValidation.valid) {
+      logger.error('Invalid request body', { requestId, franchisorName, franchiseName, keyToExtractDataFrom, body: apiEvent.body }, new Error(bodyValidation.error.body));
       return bodyValidation.error;
     }
 
