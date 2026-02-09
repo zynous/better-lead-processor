@@ -229,13 +229,19 @@ CRITICAL:
 MAPPING:
 - Map input to output by semantics. Match by what each field and value represent.
 - If an input value contains multiple pieces of information that fit separate output fields, split it and map each part to the appropriate field. Use exact substrings from the input. Apply confidence per part if needed.
-- Put in "note" anything unmappable, low-confidence, or medium-confidence (for medium, also map). Format note entries as key = value, one per line.
+- Put in "note" anything unmappable, low-confidence, or medium-confidence (for medium, also map to the output field).
 - When an input value's type does not match the output field's allowed type, treat as low confidence and put that value in note only.
+
+NOTE FORMAT (required): The "note" field must list **ONLY** every low/medium-confidence and unmapped input field WITH ITS VALUE, one per line, in the form: FieldName = value. Use the actual input key (e.g. dotted path like LetsStart.PhoneNumber or simple key). Examples:
+  PhoneNumber = 555-1234
+  LetsStart.Address.CityStatePostalCode = Austin, TX 78701
+  LetsStart.Address.StreetAddress = 123 Main St
+Do not put only a description or reasoning in the note—always include the field name and its value so the data is preserved for review.
 
 OUTPUT (SPARSE): Return ONLY the fields you mapped plus "reasoning". Do NOT include the full structure.
 - Include "profile" only with the subfields you actually mapped (omit profile entirely if you mapped nothing there, or omit any profile key you did not map).
 - Include "information", "address", or "interaction" ONLY if you mapped at least one value there; omit the whole object if you mapped nothing. Do not include any key with an empty string or empty array.
-- Include "note" only if it has content (unmappable or medium-confidence items). Omit "note" if empty.
+- Include "note" only if it has content (unmappable or low/medium-confidence items, each as "FieldName = value"). Omit "note" if empty.
 - Never include a field whose value would be empty string, empty object, or empty array. Omit it instead.
 Use only the allowed Better CRM fields below.
 
