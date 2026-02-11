@@ -81,6 +81,18 @@ Resources:
       LogGroupName: /aws/lambda/better-lead-processor
       RetentionInDays: 3
 
+  # Count leads that used the LLM (for billing); count regardless of CRM accept/reject
+  LLMLeadProcessedMetricFilter:
+    Type: AWS::Logs::MetricFilter
+    Properties:
+      LogGroupName: !Ref LeadProcessorLogGroup
+      FilterPattern: '"LLM lead mapping completed"'
+      MetricTransformations:
+        - MetricName: LLMLeadProcessed
+          MetricNamespace: BetterLeadProcessor
+          MetricValue: '1'
+          DefaultValue: 0
+
   LeadProcessorApi:
     Type: AWS::Serverless::Api
     Properties:

@@ -138,6 +138,7 @@ async function processLeadAsync(payload: AsyncLeadPayload, _context: LambdaConte
     const franchiseConfig = await getFranchiseConfig(franchisorName, franchiseName);
     const llmMapper = new LLMMapperService(systemConfig, franchiseConfig);
     const mappedLead = await llmMapper.mapLeadData(leadData);
+    logger.info('LLM lead mapping completed', { requestId, franchisorName, franchiseName });
     const normalizedLead = postProcessLead(mappedLead);
     const betterCRMLead = BetterCRMLeadSchema.parse(normalizedLead);
     const betterCRMService = new BetterCRMService(franchiseConfig);
@@ -276,6 +277,7 @@ export async function handler(
       const llmConfig = await getSystemConfig();
       const llmMapper = new LLMMapperService(llmConfig, franchiseConfig);
       const mappedLead = await llmMapper.mapLeadData(leadData);
+      logger.info('LLM lead mapping completed', { requestId, franchisorName, franchiseName });
       const normalizedLead = postProcessLead(mappedLead);
       const betterCRMLead = BetterCRMLeadSchema.parse(normalizedLead);
       const betterCRMService = new BetterCRMService(franchiseConfig);

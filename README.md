@@ -397,9 +397,39 @@ fields @timestamp, @duration | filter @duration > 5000 | sort @duration desc
 
 ---
 
-## Usage (request count for billing)
+## LLM lead count (billing)
 
-Total requests in the last 30 days (API Gateway and Lambda match; use either for billing).
+We charge for **leads that use the LLM** (one count per successful LLM mapping), regardless of whether Better CRM later accepts or rejects the lead.
+
+Counts are recorded via a **CloudWatch metric filter** on the Lambda log: when the log message `"LLM lead mapping completed"` appears, the filter emits one datapoint to the metric `BetterLeadProcessor` / `LLMLeadProcessed`. No DynamoDB or extra API calls; cost is negligible.
+
+**Get count for a calendar month (1st–last, UTC)**
+
+```bash
+./scripts/get-llm-lead-count.sh 2026-02
+# Or current month if no argument:
+./scripts/get-llm-lead-count.sh
+```
+
+**Manual CloudWatch query (e.g. Feb 2026)**
+
+```bash
+aws cloudwatch get-metric-statistics \
+  --namespace BetterLeadProcessor \
+  --metric-name LLMLeadProcessed \
+  --start-time 2026-02-01T00:00:00Z \
+  --end-time 2026-03-01T00:00:00Z \
+  --period 86400 \
+  --statistics Sum \
+  --output table
+# Sum the Sum column for the month total.
+```
+
+---
+
+## Usage (request count)
+
+Total **requests** in the last 30 days (API Gateway and Lambda).
 
 **API Gateway (Count)**
 
