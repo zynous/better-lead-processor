@@ -22,6 +22,17 @@ function isValidEmail(value: unknown): boolean {
 }
 
 /**
+ * If information.source_id is missing or empty, set to "Web".
+ */
+function ensureSourceId(lead: BetterCRMLead): void {
+  const info = lead.information ?? {};
+  lead.information = info;
+  const current = info.source_id;
+  if (current != null && String(current).trim().length > 0) return;
+  (info as Record<string, unknown>).source_id = 'Web';
+}
+
+/**
  * first_name is required by the CRM. If missing or empty, set to "Unknown".
  */
 function ensureFirstName(lead: BetterCRMLead): void {
@@ -163,6 +174,7 @@ function moveInteractionToNote(lead: BetterCRMLead): void {
  */
 export function postProcessLead(lead: BetterCRMLead): BetterCRMLead {
   const out = JSON.parse(JSON.stringify(lead)) as BetterCRMLead;
+  ensureSourceId(out);
   ensureFirstName(out);
   normalizeEmail(out);
   normalizePhone(out);

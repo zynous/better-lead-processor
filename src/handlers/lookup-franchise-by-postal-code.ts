@@ -64,7 +64,7 @@ const FSA_TO_FRANCHISE_MAPPING: Record<string, Record<string, string>> = {
     "1J0": "barrie",
     "1M0": "barrie",
     "1T0": "barrie",
-    "000XXX": "practise",
+    "000": "practise",
   },
 };
 
