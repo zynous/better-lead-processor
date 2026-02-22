@@ -86,6 +86,10 @@ const notificationSettingsSchema = z.object({
   notification_emails: notificationEmailsSchema,
 });
 
+const leadDefaultsSchema = z.object({
+  source_id: z.union([z.string(), z.number()]).optional(),
+});
+
 // Franchise Config Schema
 export const FranchiseConfigSchema = z.object({
   franchisor_name: z.string(),
@@ -93,6 +97,7 @@ export const FranchiseConfigSchema = z.object({
   active: z.boolean().default(true),
   config: z.object({
     notification_settings: notificationSettingsSchema.optional(),
+    lead_defaults: leadDefaultsSchema.optional(),
     llm_settings: z.object({
       model: z.string(),
       temperature: z.number().min(0).max(2).optional(),
@@ -105,6 +110,7 @@ export const FranchiseConfigSchema = z.object({
     }),
     config: z.object({
       notification_settings: notificationSettingsSchema.optional(),
+      lead_defaults: leadDefaultsSchema.optional(),
       llm_settings: z.object({
         model: z.string(),
         temperature: z.number().min(0).max(2).optional(),

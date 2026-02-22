@@ -66,7 +66,9 @@ async function runMappingTests() {
     process.stdout.write(`  [${i + 1}/${cases.length}] ${id} ... `);
     try {
       const mapped = await mapper.mapLeadData(input);
-      const output = postProcessLead(mapped);
+      const output = postProcessLead(mapped, {
+        defaultSourceId: franchiseConfig.config?.lead_defaults?.source_id,
+      });
       results.cases.push({
         id,
         description,
