@@ -8,6 +8,10 @@
 import { BetterCRMLead } from '../types';
 import { logger } from '../utils';
 
+interface PostProcessOptions {
+  defaultSourceId?: string | number;
+}
+
 /** Minimal email check so we don't send invalid email and get 704 */
 const VALID_EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -22,14 +26,14 @@ function isValidEmail(value: unknown): boolean {
 }
 
 /**
- * If information.source_id is missing or empty, set to "Web".
+ * If information.source_id is missing or empty, set from config default or "Web".
  */
-function ensureSourceId(lead: BetterCRMLead): void {
+function ensureSourceId(lead: BetterCRMLead, defaultSourceId?: string | number): void {
   const info = lead.information ?? {};
   lead.information = info;
   const current = info.source_id;
   if (current != null && String(current).trim().length > 0) return;
-  (info as Record<string, unknown>).source_id = 'Web';
+  (info as Record<string, unknown>).source_id = defaultSourceId;
 }
 
 /**
@@ -172,9 +176,9 @@ function moveInteractionToNote(lead: BetterCRMLead): void {
  * Returns a normalized lead safe for the Better CRM Lead API (aim for 201).
  * Clones the input so the original is not mutated.
  */
-export function postProcessLead(lead: BetterCRMLead): BetterCRMLead {
+export function postProcessLead(lead: BetterCRMLead, options: PostProcessOptions = {}): BetterCRMLead {
   const out = JSON.parse(JSON.stringify(lead)) as BetterCRMLead;
-  ensureSourceId(out);
+  ensureSourceId(out, options.defaultSourceId);
   ensureFirstName(out);
   normalizeEmail(out);
   normalizePhone(out);
