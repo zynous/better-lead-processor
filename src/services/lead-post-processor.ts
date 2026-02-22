@@ -26,7 +26,7 @@ function isValidEmail(value: unknown): boolean {
 }
 
 /**
- * If information.source_id is missing or empty, set from config default or "Web".
+ * If information.source_id is missing or empty, set from config default.
  */
 function ensureSourceId(lead: BetterCRMLead, defaultSourceId?: string | number): void {
   const info = lead.information ?? {};
