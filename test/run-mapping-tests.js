@@ -68,6 +68,8 @@ async function runMappingTests() {
       const mapped = await mapper.mapLeadData(input);
       const output = postProcessLead(mapped, {
         defaultSourceId: franchiseConfig.config?.lead_defaults?.source_id,
+        defaultIsEnabledEmail: franchiseConfig.config?.lead_defaults?.is_enabled_email,
+        defaultIsEnabledSms: franchiseConfig.config?.lead_defaults?.is_enabled_sms,
       });
       results.cases.push({
         id,

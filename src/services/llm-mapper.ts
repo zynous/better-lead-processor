@@ -57,8 +57,8 @@ const LLMMapperOutputSchema = z.object({
       allow_calls: z.string().optional(),
       allow_marketing_email: z.string().optional(),
       role_description: z.string().optional(),
-      'is-enabled_email': z.string().optional(),
-      'is-enabled_sms': z.string().optional(),
+      is_enabled_email: z.number().optional(),
+      is_enabled_sms: z.number().optional(),
       preferred_pronouns: z.string().optional(),
     })
     .optional(),
@@ -168,8 +168,8 @@ export class LLMMapperService {
         ],
         "email_address": "string - The email address of the lead (must be a valid email address)",
         "role_description": "string - The role description of the lead",
-        "is-enabled_email": "string - Whether the lead allows email",
-        "is-enabled_sms": "string - Whether the lead allows SMS",
+        "is_enabled_email": "number - Whether the lead allows email (0 or 1)",
+        "is_enabled_sms": "number - Whether the lead allows SMS (0 or 1)",
         "preferred_pronouns": "string - The preferred pronouns of the lead"
       },
       "information": {

@@ -143,7 +143,7 @@ export async function getFranchiseConfig(
   };
   config: FranchiseConfig['config'] & {
     llm_settings: { model: string; temperature?: number };
-    lead_defaults?: { source_id?: string | number };
+    lead_defaults?: { source_id?: string | number; is_enabled_email?: number; is_enabled_sms?: number };
   }
 }> {
   const normalizedFranchisor = franchisorName.trim().toLowerCase();

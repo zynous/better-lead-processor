@@ -10,6 +10,8 @@ import { logger } from '../utils';
 
 interface PostProcessOptions {
   defaultSourceId?: string | number;
+  defaultIsEnabledEmail?: number;
+  defaultIsEnabledSms?: number;
 }
 
 /** Minimal email check so we don't send invalid email and get 704 */
@@ -34,6 +36,25 @@ function ensureSourceId(lead: BetterCRMLead, defaultSourceId?: string | number):
   const current = info.source_id;
   if (current != null && String(current).trim().length > 0) return;
   (info as Record<string, unknown>).source_id = defaultSourceId;
+}
+
+/**
+ * If profile.is_enabled_email or profile.is_enabled_sms are missing, set from config (number 0 or 1).
+ */
+function ensureProfileEnabledFlags(
+  lead: BetterCRMLead,
+  defaultIsEnabledEmail?: number,
+  defaultIsEnabledSms?: number
+): void {
+  const profile = lead.profile ?? {};
+  lead.profile = profile;
+  const p = profile as Record<string, unknown>;
+  if (defaultIsEnabledEmail !== undefined && (p.is_enabled_email === undefined || p.is_enabled_email === null)) {
+    p.is_enabled_email = defaultIsEnabledEmail;
+  }
+  if (defaultIsEnabledSms !== undefined && (p.is_enabled_sms === undefined || p.is_enabled_sms === null)) {
+    p.is_enabled_sms = defaultIsEnabledSms;
+  }
 }
 
 /**
@@ -179,6 +200,7 @@ function moveInteractionToNote(lead: BetterCRMLead): void {
 export function postProcessLead(lead: BetterCRMLead, options: PostProcessOptions = {}): BetterCRMLead {
   const out = JSON.parse(JSON.stringify(lead)) as BetterCRMLead;
   ensureSourceId(out, options.defaultSourceId);
+  ensureProfileEnabledFlags(out, options.defaultIsEnabledEmail, options.defaultIsEnabledSms);
   ensureFirstName(out);
   normalizeEmail(out);
   normalizePhone(out);
