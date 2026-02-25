@@ -54,8 +54,6 @@ const LLMMapperOutputSchema = z.object({
         .optional(),
       email_address: z.string().optional(),
       identification: z.string().optional(),
-      allow_calls: z.string().optional(),
-      allow_marketing_email: z.string().optional(),
       role_description: z.string().optional(),
       preferred_pronouns: z.string().optional(),
     })

@@ -70,6 +70,8 @@ async function runMappingTests() {
         defaultSourceId: franchiseConfig.config?.lead_defaults?.source_id,
         defaultIsEnabledEmail: franchiseConfig.config?.lead_defaults?.is_enabled_email,
         defaultIsEnabledSms: franchiseConfig.config?.lead_defaults?.is_enabled_sms,
+        defaultAllowCalls: franchiseConfig.config?.lead_defaults?.allow_calls,
+        defaultAllowMarketingEmail: franchiseConfig.config?.lead_defaults?.allow_marketing_email,
       });
       results.cases.push({
         id,

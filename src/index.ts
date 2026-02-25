@@ -143,6 +143,8 @@ async function processLeadAsync(payload: AsyncLeadPayload, _context: LambdaConte
       defaultSourceId: franchiseConfig.config.lead_defaults?.source_id,
       defaultIsEnabledEmail: franchiseConfig.config.lead_defaults?.is_enabled_email,
       defaultIsEnabledSms: franchiseConfig.config.lead_defaults?.is_enabled_sms,
+      defaultAllowCalls: franchiseConfig.config.lead_defaults?.allow_calls,
+      defaultAllowMarketingEmail: franchiseConfig.config.lead_defaults?.allow_marketing_email,
     });
     const betterCRMLead = BetterCRMLeadSchema.parse(normalizedLead);
     const betterCRMService = new BetterCRMService(franchiseConfig);
@@ -286,6 +288,8 @@ export async function handler(
         defaultSourceId: franchiseConfig.config.lead_defaults?.source_id,
         defaultIsEnabledEmail: franchiseConfig.config.lead_defaults?.is_enabled_email,
         defaultIsEnabledSms: franchiseConfig.config.lead_defaults?.is_enabled_sms,
+        defaultAllowCalls: franchiseConfig.config.lead_defaults?.allow_calls,
+        defaultAllowMarketingEmail: franchiseConfig.config.lead_defaults?.allow_marketing_email,
       });
       const betterCRMLead = BetterCRMLeadSchema.parse(normalizedLead);
       const betterCRMService = new BetterCRMService(franchiseConfig);

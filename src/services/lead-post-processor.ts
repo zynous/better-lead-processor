@@ -12,6 +12,8 @@ interface PostProcessOptions {
   defaultSourceId?: string | number;
   defaultIsEnabledEmail?: number;
   defaultIsEnabledSms?: number;
+  defaultAllowCalls?: number;
+  defaultAllowMarketingEmail?: number;
 }
 
 /** Minimal email check so we don't send invalid email and get 704 */
@@ -54,6 +56,25 @@ function ensureProfileEnabledFlags(
   }
   if (defaultIsEnabledSms !== undefined && (p.is_enabled_sms === undefined || p.is_enabled_sms === null)) {
     p.is_enabled_sms = defaultIsEnabledSms;
+  }
+}
+
+/**
+ * If profile.allow_calls or profile.allow_marketing_email are missing, set from config (number 0 or 1).
+ */
+function ensureProfileAllowFlags(
+  lead: BetterCRMLead,
+  defaultAllowCalls?: number,
+  defaultAllowMarketingEmail?: number
+): void {
+  const profile = lead.profile ?? {};
+  lead.profile = profile;
+  const p = profile as Record<string, unknown>;
+  if (defaultAllowCalls !== undefined && (p.allow_calls === undefined || p.allow_calls === null)) {
+    p.allow_calls = defaultAllowCalls;
+  }
+  if (defaultAllowMarketingEmail !== undefined && (p.allow_marketing_email === undefined || p.allow_marketing_email === null)) {
+    p.allow_marketing_email = defaultAllowMarketingEmail;
   }
 }
 
@@ -201,6 +222,7 @@ export function postProcessLead(lead: BetterCRMLead, options: PostProcessOptions
   const out = JSON.parse(JSON.stringify(lead)) as BetterCRMLead;
   ensureSourceId(out, options.defaultSourceId);
   ensureProfileEnabledFlags(out, options.defaultIsEnabledEmail, options.defaultIsEnabledSms);
+  ensureProfileAllowFlags(out, options.defaultAllowCalls, options.defaultAllowMarketingEmail);
   ensureFirstName(out);
   normalizeEmail(out);
   normalizePhone(out);
