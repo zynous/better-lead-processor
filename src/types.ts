@@ -28,8 +28,8 @@ export const BetterCRMLeadSchema = z.object({
     allow_calls: z.string().optional(),
     allow_marketing_email: z.string().optional(),
     role_description: z.string().optional(),
-    'is-enabled_email': z.string().optional(),
-    'is-enabled_sms': z.string().optional(),
+    is_enabled_email: z.number().optional(),
+    is_enabled_sms: z.number().optional(),
     preferred_pronouns: z.string().optional(),
   }).optional(),
   information: z.object({
@@ -88,6 +88,8 @@ const notificationSettingsSchema = z.object({
 
 const leadDefaultsSchema = z.object({
   source_id: z.union([z.string(), z.number()]).optional(),
+  is_enabled_email: z.number().optional(),
+  is_enabled_sms: z.number().optional(),
 });
 
 // Franchise Config Schema

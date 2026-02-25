@@ -141,6 +141,8 @@ async function processLeadAsync(payload: AsyncLeadPayload, _context: LambdaConte
     logger.info('LLM lead mapping completed', { requestId, franchisorName, franchiseName });
     const normalizedLead = postProcessLead(mappedLead, {
       defaultSourceId: franchiseConfig.config.lead_defaults?.source_id,
+      defaultIsEnabledEmail: franchiseConfig.config.lead_defaults?.is_enabled_email,
+      defaultIsEnabledSms: franchiseConfig.config.lead_defaults?.is_enabled_sms,
     });
     const betterCRMLead = BetterCRMLeadSchema.parse(normalizedLead);
     const betterCRMService = new BetterCRMService(franchiseConfig);
@@ -282,6 +284,8 @@ export async function handler(
       logger.info('LLM lead mapping completed', { requestId, franchisorName, franchiseName });
       const normalizedLead = postProcessLead(mappedLead, {
         defaultSourceId: franchiseConfig.config.lead_defaults?.source_id,
+        defaultIsEnabledEmail: franchiseConfig.config.lead_defaults?.is_enabled_email,
+        defaultIsEnabledSms: franchiseConfig.config.lead_defaults?.is_enabled_sms,
       });
       const betterCRMLead = BetterCRMLeadSchema.parse(normalizedLead);
       const betterCRMService = new BetterCRMService(franchiseConfig);
