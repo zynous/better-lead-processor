@@ -139,13 +139,7 @@ async function processLeadAsync(payload: AsyncLeadPayload, _context: LambdaConte
     const llmMapper = new LLMMapperService(systemConfig, franchiseConfig);
     const mappedLead = await llmMapper.mapLeadData(leadData);
     logger.info('LLM lead mapping completed', { requestId, franchisorName, franchiseName });
-    const normalizedLead = postProcessLead(mappedLead, {
-      defaultSourceId: franchiseConfig.config.lead_defaults?.source_id,
-      defaultIsEnabledEmail: franchiseConfig.config.lead_defaults?.is_enabled_email,
-      defaultIsEnabledSms: franchiseConfig.config.lead_defaults?.is_enabled_sms,
-      defaultAllowCalls: franchiseConfig.config.lead_defaults?.allow_calls,
-      defaultAllowMarketingEmail: franchiseConfig.config.lead_defaults?.allow_marketing_email,
-    });
+    const normalizedLead = postProcessLead(mappedLead, franchiseConfig.config.lead_overrides);
     const betterCRMLead = BetterCRMLeadSchema.parse(normalizedLead);
     const betterCRMService = new BetterCRMService(franchiseConfig);
     const leadId = await betterCRMService.createLead(betterCRMLead);
@@ -284,13 +278,7 @@ export async function handler(
       const llmMapper = new LLMMapperService(llmConfig, franchiseConfig);
       const mappedLead = await llmMapper.mapLeadData(leadData);
       logger.info('LLM lead mapping completed', { requestId, franchisorName, franchiseName });
-      const normalizedLead = postProcessLead(mappedLead, {
-        defaultSourceId: franchiseConfig.config.lead_defaults?.source_id,
-        defaultIsEnabledEmail: franchiseConfig.config.lead_defaults?.is_enabled_email,
-        defaultIsEnabledSms: franchiseConfig.config.lead_defaults?.is_enabled_sms,
-        defaultAllowCalls: franchiseConfig.config.lead_defaults?.allow_calls,
-        defaultAllowMarketingEmail: franchiseConfig.config.lead_defaults?.allow_marketing_email,
-      });
+      const normalizedLead = postProcessLead(mappedLead, franchiseConfig.config.lead_overrides);
       const betterCRMLead = BetterCRMLeadSchema.parse(normalizedLead);
       const betterCRMService = new BetterCRMService(franchiseConfig);
       const leadId = await betterCRMService.createLead(betterCRMLead);

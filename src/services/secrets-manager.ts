@@ -143,7 +143,7 @@ export async function getFranchiseConfig(
   };
   config: FranchiseConfig['config'] & {
     llm_settings: { model: string; temperature?: number };
-    lead_defaults?: { source_id?: string | number; is_enabled_email?: number; is_enabled_sms?: number; allow_calls?: number; allow_marketing_email?: number };
+    lead_overrides?: FranchiseConfig['config']['lead_overrides'];
   }
 }> {
   const normalizedFranchisor = franchisorName.trim().toLowerCase();
@@ -199,9 +199,9 @@ export async function getFranchiseConfig(
         franchiseOverrides?.config?.notification_settings ??
         franchisorConfig.config.notification_settings ??
         { email_on_failure: false, notification_emails: [] },
-      lead_defaults:
-        franchiseOverrides?.config?.lead_defaults ??
-        franchisorConfig.config.lead_defaults,
+      lead_overrides:
+        franchiseOverrides?.config?.lead_overrides ??
+        franchisorConfig.config.lead_overrides,
       llm_settings:
         franchiseOverrides?.config?.llm_settings ?? franchisorConfig.config.llm_settings,
     },

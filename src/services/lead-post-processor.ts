@@ -8,13 +8,6 @@
 import { BetterCRMLead } from '../types';
 import { logger } from '../utils';
 
-interface PostProcessOptions {
-  defaultSourceId?: string | number;
-  defaultIsEnabledEmail?: number;
-  defaultIsEnabledSms?: number;
-  defaultAllowCalls?: number;
-  defaultAllowMarketingEmail?: number;
-}
 
 /** Minimal email check so we don't send invalid email and get 704 */
 const VALID_EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -30,51 +23,19 @@ function isValidEmail(value: unknown): boolean {
 }
 
 /**
- * If information.source_id is missing or empty, set from config default.
+ * Unconditionally sets every key from `overrides` onto the lead after the LLM
+ * call, regardless of what the LLM produced.
  */
-function ensureSourceId(lead: BetterCRMLead, defaultSourceId?: string | number): void {
-  const info = lead.information ?? {};
-  lead.information = info;
-  const current = info.source_id;
-  if (current != null && String(current).trim().length > 0) return;
-  (info as Record<string, unknown>).source_id = defaultSourceId;
-}
-
-/**
- * If profile.is_enabled_email or profile.is_enabled_sms are missing, set from config (number 0 or 1).
- */
-function ensureProfileEnabledFlags(
-  lead: BetterCRMLead,
-  defaultIsEnabledEmail?: number,
-  defaultIsEnabledSms?: number
-): void {
-  const profile = lead.profile ?? {};
-  lead.profile = profile;
-  const p = profile as Record<string, unknown>;
-  if (defaultIsEnabledEmail !== undefined && (p.is_enabled_email === undefined || p.is_enabled_email === null)) {
-    p.is_enabled_email = defaultIsEnabledEmail;
-  }
-  if (defaultIsEnabledSms !== undefined && (p.is_enabled_sms === undefined || p.is_enabled_sms === null)) {
-    p.is_enabled_sms = defaultIsEnabledSms;
-  }
-}
-
-/**
- * If profile.allow_calls or profile.allow_marketing_email are missing, set from config (number 0 or 1).
- */
-function ensureProfileAllowFlags(
-  lead: BetterCRMLead,
-  defaultAllowCalls?: number,
-  defaultAllowMarketingEmail?: number
-): void {
-  const profile = lead.profile ?? {};
-  lead.profile = profile;
-  const p = profile as Record<string, unknown>;
-  if (defaultAllowCalls !== undefined && (p.allow_calls === undefined || p.allow_calls === null)) {
-    p.allow_calls = defaultAllowCalls;
-  }
-  if (defaultAllowMarketingEmail !== undefined && (p.allow_marketing_email === undefined || p.allow_marketing_email === null)) {
-    p.allow_marketing_email = defaultAllowMarketingEmail;
+function applyOverrides(lead: BetterCRMLead, overrides: Record<string, unknown>): void {
+  for (const [dotKey, value] of Object.entries(overrides)) {
+    if (value === undefined) continue;
+    const dot = dotKey.indexOf('.');
+    if (dot === -1) continue; // keys must be "section.field"
+    const section = dotKey.slice(0, dot) as keyof BetterCRMLead;
+    const field = dotKey.slice(dot + 1);
+    const obj = (lead[section] ?? {}) as Record<string, unknown>;
+    (lead as Record<string, unknown>)[section] = obj;
+    obj[field] = value;
   }
 }
 
@@ -218,11 +179,9 @@ function moveInteractionToNote(lead: BetterCRMLead): void {
  * Returns a normalized lead safe for the Better CRM Lead API (aim for 201).
  * Clones the input so the original is not mutated.
  */
-export function postProcessLead(lead: BetterCRMLead, options: PostProcessOptions = {}): BetterCRMLead {
+export function postProcessLead(lead: BetterCRMLead, overrides?: Record<string, unknown>): BetterCRMLead {
   const out = JSON.parse(JSON.stringify(lead)) as BetterCRMLead;
-  ensureSourceId(out, options.defaultSourceId);
-  ensureProfileEnabledFlags(out, options.defaultIsEnabledEmail, options.defaultIsEnabledSms);
-  ensureProfileAllowFlags(out, options.defaultAllowCalls, options.defaultAllowMarketingEmail);
+  if (overrides) applyOverrides(out, overrides);
   ensureFirstName(out);
   normalizeEmail(out);
   normalizePhone(out);

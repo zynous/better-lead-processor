@@ -86,13 +86,8 @@ const notificationSettingsSchema = z.object({
   notification_emails: notificationEmailsSchema,
 });
 
-const leadDefaultsSchema = z.object({
-  source_id: z.union([z.string(), z.number()]).optional(),
-  is_enabled_email: z.number().optional(),
-  is_enabled_sms: z.number().optional(),
-  allow_calls: z.number().optional(),
-  allow_marketing_email: z.number().optional(),
-});
+// Keys are dot-notation paths: "<section>.<field>" e.g. "profile.is_enabled_email"
+const leadOverrideSchema = z.record(z.string(), z.unknown());
 
 // Franchise Config Schema
 export const FranchiseConfigSchema = z.object({
@@ -101,7 +96,7 @@ export const FranchiseConfigSchema = z.object({
   active: z.boolean().default(true),
   config: z.object({
     notification_settings: notificationSettingsSchema.optional(),
-    lead_defaults: leadDefaultsSchema.optional(),
+    lead_overrides: leadOverrideSchema.optional(),
     llm_settings: z.object({
       model: z.string(),
       temperature: z.number().min(0).max(2).optional(),
@@ -114,7 +109,7 @@ export const FranchiseConfigSchema = z.object({
     }),
     config: z.object({
       notification_settings: notificationSettingsSchema.optional(),
-      lead_defaults: leadDefaultsSchema.optional(),
+      lead_overrides: leadOverrideSchema.optional(),
       llm_settings: z.object({
         model: z.string(),
         temperature: z.number().min(0).max(2).optional(),

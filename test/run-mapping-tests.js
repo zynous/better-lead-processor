@@ -20,17 +20,23 @@ const localConfigsDir = path.join(projectRoot, 'local-configs');
 const testDir = __dirname;
 
 if (!fs.existsSync(path.join(localConfigsDir, 'app-config.json'))) {
-  console.error('Missing local-configs/app-config.json. Copy from prod-configs or create for local testing.');
+  console.error(
+    'Missing local-configs/app-config.json. Copy from prod-configs or create for local testing.'
+  );
   process.exit(1);
 }
 if (!fs.existsSync(path.join(localConfigsDir, 'lice-squad.json'))) {
-  console.error('Missing local-configs/lice-squad.json. Copy from prod-configs or create for local testing.');
+  console.error(
+    'Missing local-configs/lice-squad.json. Copy from prod-configs or create for local testing.'
+  );
   process.exit(1);
 }
 
 delete process.env.AWS_LAMBDA_FUNCTION_NAME;
 
-const { getSystemConfig, getFranchiseConfig } = require(path.join(projectRoot, 'dist/services/secrets-manager'));
+const { getSystemConfig, getFranchiseConfig } = require(
+  path.join(projectRoot, 'dist/services/secrets-manager')
+);
 const { LLMMapperService } = require(path.join(projectRoot, 'dist/services/llm-mapper'));
 const { postProcessLead } = require(path.join(projectRoot, 'dist/services/lead-post-processor'));
 
@@ -52,7 +58,8 @@ async function runMappingTests() {
   const mapper = new LLMMapperService(systemConfig, franchiseConfig);
 
   const results = {
-    description: 'Actual output (LLM + post-process) from run-mapping-tests.js. Compare with expected-output.json via compare-outputs.js.',
+    description:
+      'Actual output (LLM + post-process) from run-mapping-tests.js. Compare with expected-output.json via compare-outputs.js.',
     runAt: new Date().toISOString(),
     cases: [],
   };
@@ -67,11 +74,11 @@ async function runMappingTests() {
     try {
       const mapped = await mapper.mapLeadData(input);
       const output = postProcessLead(mapped, {
-        defaultSourceId: franchiseConfig.config?.lead_defaults?.source_id,
-        defaultIsEnabledEmail: franchiseConfig.config?.lead_defaults?.is_enabled_email,
-        defaultIsEnabledSms: franchiseConfig.config?.lead_defaults?.is_enabled_sms,
-        defaultAllowCalls: franchiseConfig.config?.lead_defaults?.allow_calls,
-        defaultAllowMarketingEmail: franchiseConfig.config?.lead_defaults?.allow_marketing_email,
+        defaultSourceId: franchiseConfig.config?.lead_overrides?.source_id,
+        defaultIsEnabledEmail: franchiseConfig.config?.lead_overrides?.is_enabled_email,
+        defaultIsEnabledSms: franchiseConfig.config?.lead_overrides?.is_enabled_sms,
+        defaultAllowCalls: franchiseConfig.config?.lead_overrides?.allow_calls,
+        defaultAllowMarketingEmail: franchiseConfig.config?.lead_overrides?.allow_marketing_email,
       });
       results.cases.push({
         id,
