@@ -168,8 +168,6 @@ export class LLMMapperService {
         ],
         "email_address": "string - The email address of the lead (must be a valid email address)",
         "role_description": "string - The role description of the lead",
-        "is_enabled_email": "number - Whether the lead allows email (0 or 1)",
-        "is_enabled_sms": "number - Whether the lead allows SMS (0 or 1)",
         "preferred_pronouns": "string - The preferred pronouns of the lead"
       },
       "information": {
