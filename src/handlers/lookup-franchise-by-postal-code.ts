@@ -17,21 +17,10 @@ const POSTAL_ROUTING: Record<string, Record<string, string>> = {
     "L3Z": "barrie",
     "L4M": "barrie",
     "L4N": "barrie",
-    // L4P: Barrie territory includes this FSA; RH–Markham sheet also lists Keswick (L4P) — shared FSA vs two franchises. Do not silently move; resolve with 6-char POSTAL_CODE_TO_FRANCHISE_MAPPING when business defines split (until then FSA routes here).
-    "L4P": "barrie",
     "L9J": "barrie",
     "L9N": "barrie",
     "L9R": "barrie",
     "L9S": "barrie",
-    // T0C (Edmonton South vs Red Deer / calgary): no overrides yet — see FSA comment on T0C; populate when sub-FSA routing is defined.
-    // Barrie
-    // shared FSA L0E
-    "L0E1A0": "barrie",
-    "L0E1E0": "barrie",
-    "L0E1N0": "barrie",
-    "L0E1R0": "barrie",
-    "L0E1S0": "barrie",
-    "L0E1T0": "barrie",
     // shared FSA L0G
     "L0G0A2": "barrie",
     "L0G0A4": "barrie",
@@ -77,6 +66,13 @@ const POSTAL_ROUTING: Record<string, Record<string, string>> = {
     // shared FSA L0N
     "L0N1P0": "barrie",
     "L0N1R0": "barrie",
+    // shared FSA L0E
+    "L0E1A0": "barrie",
+    "L0E1E0": "barrie",
+    "L0E1N0": "barrie",
+    "L0E1R0": "barrie",
+    "L0E1S0": "barrie",
+    "L0E1T0": "barrie",
     // Brampton/Vaughan
     "L0J": "brampton-vaughan",
     "L4H": "brampton-vaughan",
@@ -167,8 +163,6 @@ const POSTAL_ROUTING: Record<string, Record<string, string>> = {
     "T4E": "calgary",
     "T4G": "calgary",
     "T4H": "calgary",
-    "T4J": "calgary",
-    "T4L": "calgary",
     "T4M": "calgary",
     "T4N": "calgary",
     "T4P": "calgary",
@@ -205,13 +199,14 @@ const POSTAL_ROUTING: Record<string, Record<string, string>> = {
     "S9V": "edmonton",
     "T0A": "edmonton",
     "T0B": "edmonton",
-    // T0C: territory sheet marks this FSA as shared (Edmonton South vs Red Deer / calgary). FSA fallback is edmonton only; if routing must differ by area, add 6-char entries under POSTAL_CODE_TO_FRANCHISE_MAPPING (same idea as Barrie shared FSAs).
     "T0C": "edmonton",
     "T0E": "edmonton",
     "T0G": "edmonton",
     "T0H": "edmonton",
     "T0P": "edmonton",
     "T4V": "edmonton",
+    "T4J": "edmonton",
+    "T4L": "edmonton",
     "T4X": "edmonton",
     "T5A": "edmonton",
     "T5B": "edmonton",
@@ -751,7 +746,7 @@ const POSTAL_ROUTING: Record<string, Record<string, string>> = {
     "L4E": "richmond-hill-markham",
     "L4G": "richmond-hill-markham",
     "L4J": "richmond-hill-markham",
-    // L4P: not duplicated at FSA level — conflicts with Barrie (see Barrie). Add Keswick/RH postals under POSTAL_CODE_TO_FRANCHISE_MAPPING when split is defined.
+    "L4P": "richmond-hill-markham",
     "L4S": "richmond-hill-markham",
     "L6B": "richmond-hill-markham",
     "L6C": "richmond-hill-markham",
@@ -1127,7 +1122,7 @@ export async function lookupFranchiseByPostalCode(
     }
 
     const fsa = normalizedCode.substring(0, 3);
-    const zipCode = normalizedCode.length >= 6 ? normalizedCode.substring(0, 6) : null;
+    const normalizedPostalCode = normalizedCode.length >= 6 ? normalizedCode.substring(0, 6) : null;
     const franchisorKey = Object.keys(POSTAL_ROUTING).find(
       (k) => k.toLowerCase() === franchisorName.toLowerCase()
     );
@@ -1150,9 +1145,9 @@ export async function lookupFranchiseByPostalCode(
       };
     }
 
-    // Check for zip code first, then FSA
+    // Check for postal code first, then FSA
     const franchiseName =
-      (zipCode ? franchisorMapping[zipCode] : undefined) ||
+      (normalizedPostalCode ? franchisorMapping[normalizedPostalCode] : undefined) ||
       franchisorMapping[fsa];
 
     if (!franchiseName) {
@@ -1174,7 +1169,7 @@ export async function lookupFranchiseByPostalCode(
     logger.info('Mapped postal code to franchise', {
       requestId,
       postalCode,
-      postalCode6,
+      normalizedPostalCode,
       fsa,
       franchiseName,
       franchisorName,
