@@ -103,6 +103,12 @@ function normalizePhone(lead: BetterCRMLead): void {
   }
   profile.phone = kept.length > 0 ? kept : undefined;
   if (profile.phone === undefined) delete profile.phone;
+  else {
+    const first = profile.phone[0] as Record<string, unknown>;
+    first.primary = true;
+    first.display = true;
+    first.notification = true;
+  }
 }
 
 /**
