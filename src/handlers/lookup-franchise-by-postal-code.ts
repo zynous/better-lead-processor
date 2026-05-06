@@ -69,7 +69,6 @@ const POSTAL_ROUTING: Record<string, Record<string, string>> = {
     // shared FSA L0E
     "L0E1A0": "barrie",
     "L0E1E0": "barrie",
-    "L0E1N0": "barrie",
     "L0E1R0": "barrie",
     "L0E1S0": "barrie",
     "L0E1T0": "barrie",
@@ -764,6 +763,8 @@ const POSTAL_ROUTING: Record<string, Record<string, string>> = {
     "L0H1G0": "richmond-hill-markham",
     "L0H1J0": "richmond-hill-markham",
     "L0H1M0": "richmond-hill-markham",
+    // shared FSA L0E
+    "L0E1N0": "richmond-hill-markham",
     // Sudbury/Northern Ontario
     "P0H": "sudbury-northern-ontario",
     "P0J": "sudbury-northern-ontario",
