@@ -162,7 +162,7 @@ export class LLMMapperService {
             "extension": "string - The extension of the phone number"
           }
         ],
-        "email_address": "string - The email address of the lead (must be a valid email address)",
+        "email_address": "string - The email address of the lead. Use it as is without any validation or correction.",
         "role_description": "string - The role description of the lead",
         "preferred_pronouns": "string - The preferred pronouns of the lead"
       },
