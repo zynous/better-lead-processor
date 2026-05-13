@@ -66,12 +66,6 @@ const POSTAL_ROUTING: Record<string, Record<string, string>> = {
     // shared FSA L0N
     "L0N1P0": "barrie",
     "L0N1R0": "barrie",
-    // shared FSA L0E
-    "L0E1A0": "barrie",
-    "L0E1E0": "barrie",
-    "L0E1R0": "barrie",
-    "L0E1S0": "barrie",
-    "L0E1T0": "barrie",
     // Brampton/Vaughan
     "L0J": "brampton-vaughan",
     "L4H": "brampton-vaughan",
@@ -752,6 +746,7 @@ const POSTAL_ROUTING: Record<string, Record<string, string>> = {
     "L6E": "richmond-hill-markham",
     "L6G": "richmond-hill-markham",
     "L7B": "richmond-hill-markham",
+    "L0E": "richmond-hill-markham",
     // Richmond Hill/Markham
     // shared FSA L4P (Keswick): FSA default is barrie — see FSA comment; add L4P****** here for richmond-hill-markham when LDUs are defined.
     // shared FSA L0G
@@ -763,8 +758,6 @@ const POSTAL_ROUTING: Record<string, Record<string, string>> = {
     "L0H1G0": "richmond-hill-markham",
     "L0H1J0": "richmond-hill-markham",
     "L0H1M0": "richmond-hill-markham",
-    // shared FSA L0E
-    "L0E1N0": "richmond-hill-markham",
     // Sudbury/Northern Ontario
     "P0H": "sudbury-northern-ontario",
     "P0J": "sudbury-northern-ontario",
