@@ -685,6 +685,7 @@ const POSTAL_ROUTING: Record<string, Record<string, string>> = {
     "K8A": "ottawa",
     "K8B": "ottawa",
     "K8H": "ottawa",
+    "K1J": "ottawa",
     // Owen Sound/Collingwood (consolidated into Owen Sound & Orillia)
     "L9Y": "owensound-orillia",
     "L9Z": "owensound-orillia",
@@ -1182,6 +1183,7 @@ const POSTAL_ROUTING: Record<string, Record<string, string>> = {
     "N9K": "windsor-chatham",
     "N9V": "windsor-chatham",
     "N9Y": "windsor-chatham",
+    "N8L": "windsor-chatham",
   },
 };
 
