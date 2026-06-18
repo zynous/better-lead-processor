@@ -143,6 +143,17 @@ export class LLMMapperService {
       cleanedKeys: Object.keys(cleanedInput as Record<string, unknown>),
     });
 
+    // Franchisor/franchise-specific rules (combined, from config) injected into the prompt.
+    const rawInstructions = this.franchiseConfig.config.mapping_instructions;
+    const instructionsText = Array.isArray(rawInstructions)
+      ? rawInstructions.map((s) => s.trim()).filter(Boolean).join('\n')
+      : (rawInstructions ?? '').trim();
+    const customMappingInstructions = instructionsText
+      ? `\nFRANCHISOR-SPECIFIC MAPPING RULES:
+These tenant-specific rules may clarify, extend, or override the default use of any allowed Better CRM field.
+${instructionsText}\n`
+      : '';
+
     /**
      * Allowed Better CRM fields (WHITELIST)
      * The model may ONLY use these paths.
@@ -169,7 +180,7 @@ export class LLMMapperService {
       "information": {
         "account_owner": "string or number - Owner/user ID in CRM",
         "ageRange": "string - Age range or bracket (options: 0-5, 6-15, 16-30, 31-45, 46-60, 61-75, 76+)",
-        "bio": "string - ONLY biographical info about the lead (e.g. job title, background).",
+        "bio": "string - Biographical or profile-surface details about the lead (e.g. job title, background).",
         "date_of_birth": "string - Date of birth",
         "facebook": "string - Facebook profile URL or handle",
         "gender": "string - Gender (male, female, unspecified, genderqueer/nonbinary)",
@@ -185,8 +196,8 @@ export class LLMMapperService {
         "deliveryAddress": "string - Street address line 1",
         "deliveryAddress2": "string - Street address line 2, suite, etc.",
         "city": "string - City",
-        "province": "string - Province, state, or region",
-        "country": "string - Country",
+        "province": "string - Two-character province, state, or region code (e.g. ON, BC, VA, NC)",
+        "country": "string - Two-character country code (e.g. CA, US)",
         "postalCode": "string - Postal/ZIP code",
         "description": "string - Address/location/delivery description (e.g. 'right in front', 'back door', 'please call before arrival'). Use for any description that refers to where or how to find the address.",
         "primary_address": "boolean - Marks primary address",
@@ -206,6 +217,11 @@ export class LLMMapperService {
       [
         'system',
         `You transform input lead data into the Better CRM Lead format. Map by meaning: match input fields to the correct output fields by what they represent, not by exact key names. Use only the allowed fields below.
+{customMappingInstructions}
+RULE PRECEDENCE:
+1. Franchisor-specific and franchise-specific mapping rules, when present. These may clarify, extend, or override the default use of any allowed Better CRM field.
+2. General mapping guidance in this prompt.
+3. The allowed Better CRM field descriptions listed below.
 
 For each input field, analyze whether its value fits the best-matching output field. Assign a confidence level for that mapping: high (value clearly belongs there), medium (plausible but ambiguous), or low (weak or doubtful fit).
 
@@ -218,6 +234,7 @@ You must evaluate confidence per input field by considering whether the value ac
 
 CRITICAL:
 - Do not invent data. Only map fields that are explicitly provided in the input.
+- Exception for address geography: if city, province/state, country, or postal/ZIP code context makes the geography high-confidence, you may infer missing address.province or address.country.
 - Do not account for dependencies between fields while assigning confidence.
 
 MAPPING:
@@ -225,6 +242,13 @@ MAPPING:
 - If an input value contains multiple pieces of information that fit separate output fields, split it and map each part to the appropriate field. Use exact substrings from the input. Apply confidence per part if needed.
 - Put in "note" anything unmappable, low-confidence, or medium-confidence (for medium, also map to the output field).
 - When an input value's type does not match the output field's allowed type, treat as low confidence and put that value in note only.
+
+ADDRESS GEOGRAPHY:
+- Normalize address.province to an uppercase two-character province/state code. Examples: "Ontario" -> "ON", "on" -> "ON", "Va" -> "VA", "Virginia" -> "VA".
+- Normalize address.country to an uppercase two-character country code. Examples: "Canada" -> "CA", "United States" -> "US", "USA" -> "US".
+- If country is missing or null but the city plus province/state or postal/ZIP code clearly identifies the country, infer address.country. Examples: "Ashburn, VA 20147" -> "US"; "Toronto, ON M4E 3P9" -> "CA".
+- If province/state is missing but the city plus country or postal/ZIP code clearly identifies the province/state, infer address.province.
+- Only infer geography when confidence is high. If a city name is ambiguous and no province/state, country, or postal/ZIP context resolves it, do not infer missing geography.
 
 NOTE FORMAT (required): The "note" field must list **ONLY** every low/medium-confidence and unmapped input field WITH ITS VALUE, one per line, in the form: FieldName = value. Use the actual input key (e.g. dotted path like LetsStart.PhoneNumber or simple key). Examples:
   PhoneNumber = 555-1234
@@ -262,6 +286,7 @@ Return ONLY JSON. No other text.`,
       const messages = await prompt.formatMessages({
         inputData: JSON.stringify(cleanedInput, null, 2),
         betterCRMStructure,
+        customMappingInstructions,
       });
 
       logger.info('Invoking LLM for lead mapping', {
