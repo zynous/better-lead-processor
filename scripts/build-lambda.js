@@ -4,9 +4,13 @@
  * Output: dist/index.js (single file, handler remains index.handler)
  */
 const esbuild = require('esbuild');
+const fs = require('fs');
 const path = require('path');
 
 const root = path.resolve(__dirname, '..');
+const distDir = path.join(root, 'dist');
+
+fs.rmSync(distDir, { recursive: true, force: true });
 
 esbuild
   .build({
@@ -15,7 +19,7 @@ esbuild
     platform: 'node',
     target: 'node24',
     format: 'cjs',
-    outfile: path.join(root, 'dist/index.js'),
+    outfile: path.join(distDir, 'index.js'),
     sourcemap: true,
     minify: false,
     external: [

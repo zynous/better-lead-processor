@@ -45,18 +45,16 @@
           "country": "US",
           "postalCode": "20147"
         },
-        "noteIncludes": [
-          "HowDidYouHearAboutUs",
-          "Google Search",
-          "WhatServiceAreYouInterestedIn",
-          "One time deep clean"
-        ]
+        "information": {
+          "bio": "One time deep clean"
+        }
       },
       "judgeCriteria": [
         "Map nested name fields to profile first and last name.",
         "Map phone and email without changing their meaning.",
         "Map street, city, state, postal code, and inferred country into the address block.",
-        "Preserve lead source and requested service in note because they are not Better lead fields."
+        "Map requested service into the Better bio/profile-surface field.",
+        "Map lead source when it matches the configured Better source override."
       ]
     },
     {
@@ -91,14 +89,11 @@
           "province": "NC",
           "country": "US",
           "postalCode": "27701"
-        },
-        "noteIncludes": [
-          "Facebook/Instagram"
-        ]
+        }
       },
       "judgeCriteria": [
         "Infer country from clear city, state, and ZIP code context.",
-        "Preserve the lead source in note.",
+        "Map the lead source when it matches the configured Better source override.",
         "Do not use Unknown when geography can be inferred with high confidence."
       ]
     },
@@ -125,7 +120,6 @@
         ],
         "noteIncludes": [
           "email = morgan.casey.invalid",
-          "utm_source",
           "campaign",
           "Move-Out Cleaning"
         ]
@@ -200,16 +194,12 @@
           "province": "ON",
           "country": "CA",
           "postalCode": "M6S1K9"
-        },
-        "noteIncludes": [
-          "referral",
-          "Direct Mail"
-        ]
+        }
       },
       "judgeCriteria": [
         "Treat postal code as address data for the resolved secret-backed location.",
         "Do not rely on postal-code franchise lookup.",
-        "Preserve referral/source data in note."
+        "Map referral/source data when it matches the configured Better source override."
       ]
     },
     {
@@ -252,11 +242,7 @@
           "province": "VA",
           "country": "US",
           "postalCode": "20147"
-        },
-        "noteIncludes": [
-          "HowDidYouHearAboutUs",
-          "Google Search"
-        ]
+        }
       },
       "judgeCriteria": [
         "Infer country as US from Ashburn, VA and ZIP code context when country is null.",
@@ -291,16 +277,12 @@
           "province": "ON",
           "country": "CA",
           "postalCode": "M4E 3P9"
-        },
-        "noteIncludes": [
-          "referral",
-          "Website"
-        ]
+        }
       },
       "judgeCriteria": [
         "Normalize explicit province name Ontario to ON.",
         "Normalize explicit country name Canada to CA.",
-        "Preserve referral/source data in note."
+        "Map referral/source data when it matches the configured Better source override."
       ]
     },
     {
