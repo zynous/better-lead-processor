@@ -126,6 +126,25 @@ async function getSecret(secretName: string, useExtension = true): Promise<strin
   return secretValue;
 }
 
+/** Normalize string | string[] mapping instructions to a single trimmed, newline-joined string. */
+function normalizeMappingInstructions(value: string | string[] | undefined): string | undefined {
+  if (value === undefined) return undefined;
+  const parts = (Array.isArray(value) ? value : [value])
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0);
+  return parts.length > 0 ? parts.join('\n') : undefined;
+}
+
+/** Combine franchisor-level and franchise-level instructions; both apply (franchisor first). */
+function combineMappingInstructions(
+  franchisor: string | string[] | undefined,
+  franchise: string | string[] | undefined
+): string | undefined {
+  const parts = [normalizeMappingInstructions(franchisor), normalizeMappingInstructions(franchise)]
+    .filter((s): s is string => !!s);
+  return parts.length > 0 ? parts.join('\n') : undefined;
+}
+
 /**
  * Get franchise configuration from Secrets Manager or local file
  * 
@@ -144,6 +163,7 @@ export async function getFranchiseConfig(
   config: FranchiseConfig['config'] & {
     llm_settings: { model: string; temperature?: number };
     lead_overrides?: FranchiseConfig['config']['lead_overrides'];
+    mapping_instructions?: string;
   }
 }> {
   const normalizedFranchisor = franchisorName.trim().toLowerCase();
@@ -202,6 +222,10 @@ export async function getFranchiseConfig(
       lead_overrides:
         franchiseOverrides?.config?.lead_overrides ??
         franchisorConfig.config.lead_overrides,
+      mapping_instructions: combineMappingInstructions(
+        franchisorConfig.config.mapping_instructions,
+        franchiseOverrides?.config?.mapping_instructions
+      ),
       llm_settings:
         franchiseOverrides?.config?.llm_settings ?? franchisorConfig.config.llm_settings,
     },

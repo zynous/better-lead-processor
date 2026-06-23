@@ -92,6 +92,10 @@ const notificationSettingsSchema = z.object({
 // Keys are dot-notation paths: "<section>.<field>" e.g. "profile.is_enabled_email"
 const leadOverrideSchema = z.record(z.string(), z.unknown());
 
+// Free-text, franchisor/franchise-specific mapping rules injected into the LLM prompt.
+// Accepts a single string or a list of rules (joined when applied).
+const mappingInstructionsSchema = z.union([z.string(), z.array(z.string())]);
+
 // Franchise Config Schema
 export const FranchiseConfigSchema = z.object({
   franchisor_name: z.string(),
@@ -100,6 +104,7 @@ export const FranchiseConfigSchema = z.object({
   config: z.object({
     notification_settings: notificationSettingsSchema.optional(),
     lead_overrides: leadOverrideSchema.optional(),
+    mapping_instructions: mappingInstructionsSchema.optional(),
     llm_settings: z.object({
       model: z.string(),
       temperature: z.number().min(0).max(2).optional(),
@@ -113,6 +118,7 @@ export const FranchiseConfigSchema = z.object({
     config: z.object({
       notification_settings: notificationSettingsSchema.optional(),
       lead_overrides: leadOverrideSchema.optional(),
+      mapping_instructions: mappingInstructionsSchema.optional(),
       llm_settings: z.object({
         model: z.string(),
         temperature: z.number().min(0).max(2).optional(),

@@ -1,0 +1,28 @@
+{
+  "description": "Rubric for judging whether the LLM-produced Better payload preserves the submitted lead data while remaining BPro-safe.",
+  "modelEnv": "E2E_JUDGE_MODEL",
+  "defaultModel": "gpt-5-mini",
+  "requiredOutputSchema": {
+    "pass": "boolean",
+    "issues": "array of strings",
+    "confidence": "number from 0 to 1"
+  },
+  "globalCriteria": [
+    "The payload must preserve clear identity fields such as first name, last name, business name, email, and phone when present and valid.",
+    "The payload must not send invalid email values in profile.email_address; invalid or empty emails should be preserved in note.",
+    "The payload must preserve address fields by meaning: street to address.deliveryAddress, city to address.city, state/province to address.province, country to address.country, and zip/postal code to address.postalCode.",
+    "If any required address component is missing, Unknown may be used only to satisfy BPro address requirements.",
+    "The payload must preserve unmapped source, campaign, referral, requested service, and interaction details in note.",
+    "The payload must not hallucinate unsupported Better fields or put unrelated free text into structured fields.",
+    "The payload must not include an interaction object because BPro has rejected that shape in previous probe testing.",
+    "Lead override fields required by the llm-test location must be present exactly as asserted by the deterministic test code."
+  ],
+  "failureExamples": [
+    "Valid input email omitted without being preserved in note.",
+    "Invalid input email sent as profile.email_address.",
+    "Known address values replaced by Unknown.",
+    "Service interest, lead source, campaign, referral, or interaction details lost entirely.",
+    "Interaction block included in the final Better payload.",
+    "Payload maps a person's name into business_name with no evidence."
+  ]
+}

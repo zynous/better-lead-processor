@@ -15,6 +15,7 @@
         "test:compare": "node test/compare-outputs.js",
         "test:crm-probe": "node test/crm-api-probe.js",
         "test:llm-crm": "node test/run-llm-crm-tests.js",
+        "test:e2e": "node test/E2E/run-e2e.js",
         "test:all-llm": "node test/run-all-through-llm.js",
         "lint": "eslint src --ext .ts",
         "format": "prettier --write \"src/**/*.ts\"",

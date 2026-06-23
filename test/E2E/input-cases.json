@@ -1,0 +1,350 @@
+{
+  "description": "Sanitized E2E cases for the deployed secret-backed test location. Inputs are inspired by CloudWatch shapes but contain no customer PII.",
+  "target": {
+    "secretName": "better-lead-processor/deep"
+  },
+  "cases": [
+    {
+      "id": "nested-contact-full-address",
+      "description": "Nested contact payload with full identity, phone, email, address, source, and service interest.",
+      "input": {
+        "ContactInformation": {
+          "Name": {
+            "First": "Alex",
+            "FirstAndLast": "Alex Rivera",
+            "Last": "Rivera"
+          },
+          "PhoneNumber": "+14165550100",
+          "EmailAddress": "alex.rivera.e2e@example.com",
+          "Address": {
+            "City": "Ashburn",
+            "CityStatePostalCode": "Ashburn, VA 20147",
+            "Country": null,
+            "FullAddress": "100 Example Terrace, Ashburn, VA 20147",
+            "FullInternationalAddress": "100 Example Terrace, Ashburn, VA 20147",
+            "Line1": "100 Example Terrace",
+            "PostalCode": "20147",
+            "State": "VA",
+            "StreetAddress": "100 Example Terrace",
+            "Type": "Home"
+          },
+          "HowDidYouHearAboutUs": "Google Search",
+          "WhatServiceAreYouInterestedIn": "One time deep clean"
+        }
+      },
+      "expect": {
+        "profile": {
+          "first_name": "Alex",
+          "last_name": "Rivera",
+          "email_address": "alex.rivera.e2e@example.com"
+        },
+        "address": {
+          "deliveryAddress": "100 Example Terrace",
+          "city": "Ashburn",
+          "province": "VA",
+          "country": "US",
+          "postalCode": "20147"
+        },
+        "information": {
+          "bio": "One time deep clean"
+        }
+      },
+      "judgeCriteria": [
+        "Map nested name fields to profile first and last name.",
+        "Map phone and email without changing their meaning.",
+        "Map street, city, state, postal code, and inferred country into the address block.",
+        "Map requested service into the Better bio/profile-surface field.",
+        "Map lead source when it matches the configured Better source override."
+      ]
+    },
+    {
+      "id": "partial-address-country-null",
+      "description": "Partial nested address with null country should be normalized into a BPro-safe address.",
+      "input": {
+        "ContactInformation": {
+          "Name": {
+            "First": "Jordan",
+            "FirstAndLast": "Jordan Kim",
+            "Last": "Kim"
+          },
+          "PhoneNumber": "9055550110",
+          "EmailAddress": "jordan.kim.e2e@example.com",
+          "Address": {
+            "City": "Durham",
+            "Country": null,
+            "PostalCode": "27701",
+            "State": "NC"
+          },
+          "HowDidYouHearAboutUs": "Facebook/Instagram"
+        }
+      },
+      "expect": {
+        "profile": {
+          "first_name": "Jordan",
+          "last_name": "Kim",
+          "email_address": "jordan.kim.e2e@example.com"
+        },
+        "address": {
+          "city": "Durham",
+          "province": "NC",
+          "country": "US",
+          "postalCode": "27701"
+        }
+      },
+      "judgeCriteria": [
+        "Infer country from clear city, state, and ZIP code context.",
+        "Map the lead source when it matches the configured Better source override.",
+        "Do not use Unknown when geography can be inferred with high confidence."
+      ]
+    },
+    {
+      "id": "invalid-email-unmappable",
+      "description": "Invalid email plus unmappable campaign data should still be accepted by BPro after post-processing.",
+      "input": {
+        "firstName": "Morgan",
+        "lastName": "Casey",
+        "email": "morgan.casey.invalid",
+        "phone": "+1-416-555-0120",
+        "utm_source": "e2e-test",
+        "campaign": "spring validation",
+        "service_interest": "Move-Out Cleaning"
+      },
+      "expect": {
+        "profile": {
+          "first_name": "Morgan",
+          "last_name": "Casey"
+        },
+        "absentPaths": [
+          "profile.email_address",
+          "interaction"
+        ],
+        "noteIncludes": [
+          "email = morgan.casey.invalid",
+          "campaign",
+          "Move-Out Cleaning"
+        ]
+      },
+      "judgeCriteria": [
+        "Do not send the invalid email as profile.email_address.",
+        "Preserve invalid email and unmappable campaign/service fields in note.",
+        "Keep valid name and phone fields in Better-compatible profile fields."
+      ]
+    },
+    {
+      "id": "interaction-moved-to-note",
+      "description": "Interaction-like fields should be preserved in note and omitted from the Better payload interaction block.",
+      "input": {
+        "firstName": "Taylor",
+        "lastName": "Meeting",
+        "email": "taylor.meeting.e2e@example.com",
+        "phone": "416-555-0130",
+        "activityType": "meeting",
+        "interactionDate": "2026-06-18T18:00:00Z",
+        "end_date": "2026-06-18T18:30:00Z",
+        "event_name": "E2E discovery call",
+        "event_description": "Customer asked for a follow-up quote"
+      },
+      "expect": {
+        "profile": {
+          "first_name": "Taylor",
+          "last_name": "Meeting",
+          "email_address": "taylor.meeting.e2e@example.com"
+        },
+        "absentPaths": [
+          "interaction"
+        ],
+        "noteIncludes": [
+          "Interaction:",
+          "activity_type",
+          "interaction_date",
+          "event_name",
+          "Customer asked for a follow-up quote"
+        ]
+      },
+      "judgeCriteria": [
+        "Preserve interaction details in note.",
+        "Do not send an interaction object to BPro.",
+        "Keep identity and contact fields mapped normally."
+      ]
+    },
+    {
+      "id": "postal-like-direct-location",
+      "description": "Postal-code-like direct input should not invoke postal-code routing; it still posts only to the resolved secret-backed location.",
+      "input": {
+        "first_name": "Riley",
+        "last_name": "Postal",
+        "email": "riley.postal.e2e@example.com",
+        "phone_number": "647-555-0140",
+        "postalCode": "M6S1K9",
+        "city": "Toronto",
+        "province": "ON",
+        "country": "Canada",
+        "deliveryAddress": "200 Example Road",
+        "referral": "Direct Mail"
+      },
+      "expect": {
+        "profile": {
+          "first_name": "Riley",
+          "last_name": "Postal",
+          "email_address": "riley.postal.e2e@example.com"
+        },
+        "address": {
+          "deliveryAddress": "200 Example Road",
+          "city": "Toronto",
+          "province": "ON",
+          "country": "CA",
+          "postalCode": "M6S1K9"
+        }
+      },
+      "judgeCriteria": [
+        "Treat postal code as address data for the resolved secret-backed location.",
+        "Do not rely on postal-code franchise lookup.",
+        "Map referral/source data when it matches the configured Better source override."
+      ]
+    },
+    {
+      "id": "ygm-booking-form-null-country-infers-us",
+      "description": "YGM booking-form address with null country should infer US and normalize state abbreviation casing.",
+      "input": {
+        "ContactInformation": {
+          "Name": {
+            "First": "Leslie",
+            "FirstAndLast": "Leslie Geography",
+            "Last": "Geography"
+          },
+          "PhoneNumber": "+15715550160",
+          "EmailAddress": "leslie.geography.e2e@example.com",
+          "Address": {
+            "City": "Ashburn",
+            "CityStatePostalCode": "Ashburn, Va 20147",
+            "Country": null,
+            "CountryCode": null,
+            "FullAddress": "42109 Example Terrace, Ashburn, Va 20147",
+            "FullInternationalAddress": "42109 Example Terrace, Ashburn, Va 20147",
+            "Line1": "42109 Example Terrace",
+            "PostalCode": "20147",
+            "State": "Va",
+            "StreetAddress": "42109 Example Terrace",
+            "Type": "Home"
+          },
+          "HowDidYouHearAboutUs": "Google Search"
+        }
+      },
+      "expect": {
+        "profile": {
+          "first_name": "Leslie",
+          "last_name": "Geography",
+          "email_address": "leslie.geography.e2e@example.com"
+        },
+        "address": {
+          "deliveryAddress": "42109 Example Terrace",
+          "city": "Ashburn",
+          "province": "VA",
+          "country": "US",
+          "postalCode": "20147"
+        }
+      },
+      "judgeCriteria": [
+        "Infer country as US from Ashburn, VA and ZIP code context when country is null.",
+        "Normalize state abbreviation Va to VA before sending to Better.",
+        "Do not send Unknown for country when the geography is high-confidence."
+      ]
+    },
+    {
+      "id": "address-country-province-full-names-to-codes",
+      "description": "Explicit full country and province names should be normalized to two-character codes.",
+      "input": {
+        "first_name": "Nico",
+        "last_name": "Normalize",
+        "email": "nico.normalize.e2e@example.com",
+        "phone_number": "416-555-0161",
+        "deliveryAddress": "300 Example Street",
+        "city": "Toronto",
+        "province": "Ontario",
+        "country": "Canada",
+        "postalCode": "M4E 3P9",
+        "referral": "Website"
+      },
+      "expect": {
+        "profile": {
+          "first_name": "Nico",
+          "last_name": "Normalize",
+          "email_address": "nico.normalize.e2e@example.com"
+        },
+        "address": {
+          "deliveryAddress": "300 Example Street",
+          "city": "Toronto",
+          "province": "ON",
+          "country": "CA",
+          "postalCode": "M4E 3P9"
+        }
+      },
+      "judgeCriteria": [
+        "Normalize explicit province name Ontario to ON.",
+        "Normalize explicit country name Canada to CA.",
+        "Map referral/source data when it matches the configured Better source override."
+      ]
+    },
+    {
+      "id": "mapping-instructions-how-we-may-help-you-bio",
+      "description": "Mapping instructions should map how_we_may_help_you into information.bio.",
+      "input": {
+        "firstName": "Casey",
+        "lastName": "Bio",
+        "email": "casey.bio.e2e@example.com",
+        "phone": "416-555-0150",
+        "how_we_may_help_you": "Customer is comparing recurring cleaning options for a short-term rental property and wants help choosing the best package."
+      },
+      "expect": {
+        "profile": {
+          "first_name": "Casey",
+          "last_name": "Bio",
+          "email_address": "casey.bio.e2e@example.com"
+        },
+        "information": {
+          "bio": "Customer is comparing recurring cleaning options for a short-term rental property and wants help choosing the best package."
+        }
+      },
+      "judgeCriteria": [
+        "This case validates the secret mapping_instructions rule for how_we_may_help_you.",
+        "Map how_we_may_help_you exactly into information.bio.",
+        "Do not leave the how_we_may_help_you value only in note.",
+        "Keep identity and contact fields mapped normally."
+      ]
+    },
+    {
+      "id": "address-no-street-delivery-unknown",
+      "description": "Address with city/province/postal but no street line must not crash on a null deliveryAddress; post-processor fills Unknown so the address stays BPro-safe.",
+      "input": {
+        "firstName": "Robin",
+        "lastName": "Nostreet",
+        "email": "robin.nostreet.e2e@example.com",
+        "phone": "905-555-0170",
+        "city": "Hamilton",
+        "province": "ON",
+        "postalCode": "L8P 1A1"
+      },
+      "expect": {
+        "profile": {
+          "first_name": "Robin",
+          "last_name": "Nostreet",
+          "email_address": "robin.nostreet.e2e@example.com"
+        },
+        "address": {
+          "deliveryAddress": "Unknown",
+          "city": "Hamilton",
+          "province": "ON",
+          "country": "CA",
+          "postalCode": "L8P 1A1"
+        }
+      },
+      "judgeCriteria": [
+        "Do not fail when no street address is provided and deliveryAddress is null or missing.",
+        "Map city, province, and postal code into the address block.",
+        "Infer country as CA from the Ontario province and Canadian postal code.",
+        "Allow deliveryAddress to be filled with Unknown so the address block stays complete.",
+        "Keep identity and contact fields mapped normally."
+      ]
+    }
+  ]
+}
