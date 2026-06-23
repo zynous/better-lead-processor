@@ -21,6 +21,7 @@ const POSTAL_ROUTING: Record<string, Record<string, string>> = {
     "L9N": "barrie",
     "L9R": "barrie",
     "L9S": "barrie",
+    "L3W": "barrie",
     // shared FSA L0G
     "L0G0A2": "barrie",
     "L0G0A4": "barrie",
@@ -455,6 +456,7 @@ const POSTAL_ROUTING: Record<string, Record<string, string>> = {
     "N2R": "kitchener-waterloo",
     "N2T": "kitchener-waterloo",
     "N2V": "kitchener-waterloo",
+    "N3A": "kitchener-waterloo",
     "N3B": "kitchener-waterloo",
     "N3C": "kitchener-waterloo",
     "N3E": "kitchener-waterloo",
@@ -789,6 +791,7 @@ const POSTAL_ROUTING: Record<string, Record<string, string>> = {
     "P6A": "sudbury-northern-ontario",
     "P6B": "sudbury-northern-ontario",
     "P6C": "sudbury-northern-ontario",
+    "P5A3N9": "sudbury-northern-ontario",
     // Saskatoon (Saskatoon & Regina Territory — single franchise slug)
     "S0G": "saskatoon",
     "S0H": "saskatoon",
