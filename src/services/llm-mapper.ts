@@ -73,7 +73,7 @@ type LLMMapperOutput = z.infer<typeof LLMMapperOutputSchema>;
  * - Non-plain objects (Date, RegExp, etc.): returned as-is.
  * - Circular references: return {} or [] to avoid stack overflow.
  */
-function stripNullFromInput(value: unknown, seen = new WeakSet<object>()): unknown {
+export function stripNullFromInput(value: unknown, seen = new WeakSet<object>()): unknown {
   if (value === null || value === undefined) {
     return undefined;
   }
@@ -278,10 +278,15 @@ Return ONLY JSON. No other text.`,
     ]);
 
     try {
-      const structuredLlm = this.llm.withStructuredOutput(LLMMapperOutputSchema, {
-        method: 'jsonMode',
-        name: 'lead_mapping',
-      });
+      // Coerce any null the LLM emits to undefined before validation so optional
+      // fields (e.g. address.deliveryAddress) don't fail on an explicit null.
+      const structuredLlm = this.llm.withStructuredOutput(
+        z.preprocess((value) => stripNullFromInput(value), LLMMapperOutputSchema),
+        {
+          method: 'jsonMode',
+          name: 'lead_mapping',
+        }
+      );
 
       const messages = await prompt.formatMessages({
         inputData: JSON.stringify(cleanedInput, null, 2),
@@ -293,7 +298,7 @@ Return ONLY JSON. No other text.`,
         franchisorName: this.franchiseConfig.franchisor_name,
         franchiseName: this.franchiseConfig.franchise_name,
       });
-      const parsed: LLMMapperOutput = await structuredLlm.invoke(messages);
+      const parsed = (await structuredLlm.invoke(messages)) as LLMMapperOutput;
 
       logger.info('LLM reasoning', {
         franchisorName: this.franchiseConfig.franchisor_name,

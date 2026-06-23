@@ -9,6 +9,8 @@
 
 ## How to deploy to cloud
 
+`pnpm build && sam build && sam deploy`
+
 1. **Secrets:** Put production configs in `prod-configs/` (e.g. `app-config.json`, `{franchisor}.json`). Run `./scripts/deploy-secrets.sh` to push to AWS Secrets Manager.
 2. **Build:** `pnpm build` then `sam build` (use `--use-container` if needed).
 3. **Deploy:** `sam deploy` (first time: `sam deploy --guided`). Use when changing `template.yaml` (infra, throttling, etc.).

@@ -311,6 +311,40 @@
         "Do not leave the how_we_may_help_you value only in note.",
         "Keep identity and contact fields mapped normally."
       ]
+    },
+    {
+      "id": "address-no-street-delivery-unknown",
+      "description": "Address with city/province/postal but no street line must not crash on a null deliveryAddress; post-processor fills Unknown so the address stays BPro-safe.",
+      "input": {
+        "firstName": "Robin",
+        "lastName": "Nostreet",
+        "email": "robin.nostreet.e2e@example.com",
+        "phone": "905-555-0170",
+        "city": "Hamilton",
+        "province": "ON",
+        "postalCode": "L8P 1A1"
+      },
+      "expect": {
+        "profile": {
+          "first_name": "Robin",
+          "last_name": "Nostreet",
+          "email_address": "robin.nostreet.e2e@example.com"
+        },
+        "address": {
+          "deliveryAddress": "Unknown",
+          "city": "Hamilton",
+          "province": "ON",
+          "country": "CA",
+          "postalCode": "L8P 1A1"
+        }
+      },
+      "judgeCriteria": [
+        "Do not fail when no street address is provided and deliveryAddress is null or missing.",
+        "Map city, province, and postal code into the address block.",
+        "Infer country as CA from the Ontario province and Canadian postal code.",
+        "Allow deliveryAddress to be filled with Unknown so the address block stays complete.",
+        "Keep identity and contact fields mapped normally."
+      ]
     }
   ]
 }
