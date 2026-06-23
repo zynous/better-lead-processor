@@ -15,7 +15,10 @@ const inputPath = path.join(testDir, 'input-cases.json');
 const rubricPath = path.join(testDir, 'llm-judge-rubric.json');
 const outputPath = path.join(testDir, 'e2e-results.json');
 const logGroupName = process.env.E2E_LOG_GROUP || '/aws/lambda/better-lead-processor';
-const apiBaseUrl = (process.env.E2E_BASE_URL || 'https://integration.zynous.com').replace(/\/$/, '');
+const apiBaseUrl = (process.env.E2E_BASE_URL || 'https://integration.zynous.com').replace(
+  /\/$/,
+  ''
+);
 const defaultTimeoutMs = Number(process.env.E2E_TIMEOUT_MS || 180000);
 const pollIntervalMs = Number(process.env.E2E_POLL_INTERVAL_MS || 5000);
 
@@ -164,20 +167,27 @@ async function loadFranchisorSecret(target) {
   }
 
   if (!secret.api_key) {
-    throw new Error('Secret ' + secretName + ' must include api_key for deployed API authentication');
+    throw new Error(
+      'Secret ' + secretName + ' must include api_key for deployed API authentication'
+    );
   }
 
-  if (!secret.franchisor_name) throw new Error('Secret ' + secretName + ' must include franchisor_name');
+  if (!secret.franchisor_name)
+    throw new Error('Secret ' + secretName + ' must include franchisor_name');
 
   const franchiseNames = Object.keys(secret.franchises || {});
-  if (franchiseNames.length === 0) throw new Error('Secret ' + secretName + ' must include at least one franchise');
+  if (franchiseNames.length === 0)
+    throw new Error('Secret ' + secretName + ' must include at least one franchise');
 
   const requestedFranchise = target.franchiseName;
   const franchiseKey = requestedFranchise
-    ? franchiseNames.find((key) => key.toLowerCase() === String(requestedFranchise).trim().toLowerCase())
+    ? franchiseNames.find(
+        (key) => key.toLowerCase() === String(requestedFranchise).trim().toLowerCase()
+      )
     : franchiseNames[0];
 
-  if (!franchiseKey) throw new Error('Secret ' + secretName + ' does not include franchise ' + requestedFranchise);
+  if (!franchiseKey)
+    throw new Error('Secret ' + secretName + ' does not include franchise ' + requestedFranchise);
 
   const franchise = secret.franchises[franchiseKey];
   const expectedOverrides = franchise.config?.lead_overrides || secret.config?.lead_overrides || {};
@@ -352,9 +362,21 @@ function validatePayloadShape(payload, issues) {
     assert(allowedTopLevel.has(key), 'Unexpected top-level Better payload key: ' + key, issues);
   }
 
-  assert(payload && typeof payload === 'object' && !Array.isArray(payload), 'Better payload must be an object', issues);
-  assert(payload.profile && typeof payload.profile === 'object', 'Better payload must include profile object', issues);
-  assert(!hasPath(payload, 'interaction'), 'Better payload must not include interaction block', issues);
+  assert(
+    payload && typeof payload === 'object' && !Array.isArray(payload),
+    'Better payload must be an object',
+    issues
+  );
+  assert(
+    payload.profile && typeof payload.profile === 'object',
+    'Better payload must include profile object',
+    issues
+  );
+  assert(
+    !hasPath(payload, 'interaction'),
+    'Better payload must not include interaction block',
+    issues
+  );
 
   const email = getPath(payload, 'profile.email_address');
   if (email !== undefined) {
@@ -405,17 +427,29 @@ function validateDeterministic(caseDef, payload, cloudWatchSummary, expectedOver
 
   for (const [field, expected] of Object.entries(caseDef.expect?.profile || {})) {
     const actual = getPath(payload, 'profile.' + field);
-    assert(actual === expected, 'Expected profile.' + field + ' to equal ' + JSON.stringify(expected), issues);
+    assert(
+      actual === expected,
+      'Expected profile.' + field + ' to equal ' + JSON.stringify(expected),
+      issues
+    );
   }
 
   for (const [field, expected] of Object.entries(caseDef.expect?.address || {})) {
     const actual = getPath(payload, 'address.' + field);
-    assert(actual === expected, 'Expected address.' + field + ' to equal ' + JSON.stringify(expected), issues);
+    assert(
+      actual === expected,
+      'Expected address.' + field + ' to equal ' + JSON.stringify(expected),
+      issues
+    );
   }
 
   for (const [field, expected] of Object.entries(caseDef.expect?.information || {})) {
     const actual = getPath(payload, 'information.' + field);
-    assert(actual === expected, 'Expected information.' + field + ' to equal ' + JSON.stringify(expected), issues);
+    assert(
+      actual === expected,
+      'Expected information.' + field + ' to equal ' + JSON.stringify(expected),
+      issues
+    );
   }
 
   for (const dotPath of caseDef.expect?.absentPaths || []) {
@@ -432,7 +466,11 @@ function validateDeterministic(caseDef, payload, cloudWatchSummary, expectedOver
     'Expected Better CRM create-lead response code 201',
     issues
   );
-  assert(Boolean(cloudWatchSummary.leadId), 'Expected Better CRM lead id in CloudWatch response', issues);
+  assert(
+    Boolean(cloudWatchSummary.leadId),
+    'Expected Better CRM lead id in CloudWatch response',
+    issues
+  );
 
   return issues;
 }
@@ -452,7 +490,9 @@ function getJudgeApiKey() {
 async function runJudge(caseDef, payload, llmReasoning, rubric) {
   const apiKey = getJudgeApiKey();
   if (!apiKey) {
-    throw new Error('Missing OPENAI_API_KEY or local-configs/app-config.json llm_api_key for judge mode');
+    throw new Error(
+      'Missing OPENAI_API_KEY or local-configs/app-config.json llm_api_key for judge mode'
+    );
   }
 
   const model = process.env.E2E_JUDGE_MODEL || rubric.defaultModel || 'gpt-5-mini';
@@ -484,7 +524,7 @@ async function runJudge(caseDef, payload, llmReasoning, rubric) {
         ),
       },
     ],
-    max_completion_tokens: 800,
+    max_completion_tokens: 2000,
   };
 
   const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -547,9 +587,13 @@ function selectCases(inputFile, caseArg) {
   const allCases = inputFile.cases || [];
   if (caseArg === null || caseArg === undefined) return allCases;
 
-  const found = allCases.find((caseDef, index) => caseDef.id === caseArg || String(index) === caseArg);
+  const found = allCases.find(
+    (caseDef, index) => caseDef.id === caseArg || String(index) === caseArg
+  );
   if (!found) {
-    throw new Error('Case not found: ' + caseArg + ' (use case id or index 0..' + (allCases.length - 1) + ')');
+    throw new Error(
+      'Case not found: ' + caseArg + ' (use case id or index 0..' + (allCases.length - 1) + ')'
+    );
   }
   return [found];
 }
@@ -579,7 +623,11 @@ async function runCase(caseDef, rubric, args, resolvedTarget) {
     return record;
   }
 
-  const cloudWatchSummary = await waitForCloudWatchEvidence(record.requestId, submittedAtMs, args.timeoutMs);
+  const cloudWatchSummary = await waitForCloudWatchEvidence(
+    record.requestId,
+    submittedAtMs,
+    args.timeoutMs
+  );
   record.asyncAwsRequestId = cloudWatchSummary.asyncAwsRequestId;
   record.leadId = cloudWatchSummary.leadId;
 
@@ -690,7 +738,9 @@ async function main() {
 
   fs.writeFileSync(outputPath, JSON.stringify(summary, null, 2), 'utf8');
   console.log('');
-  console.log('Summary: ' + passed + ' passed, ' + failed + ' failed. Results written to ' + outputPath);
+  console.log(
+    'Summary: ' + passed + ' passed, ' + failed + ' failed. Results written to ' + outputPath
+  );
 
   if (failed > 0) process.exit(1);
 }
