@@ -29,6 +29,7 @@ const POSTAL_ROUTING: Record<string, Record<string, string>> = {
     "L0G0A8": "barrie",
     "L0G1A0": "barrie",
     "L0G1B0": "barrie",
+    "L0G1L0": "barrie",
     "L0G1N0": "barrie",
     "L0G1T0": "barrie",
     "L0G1W0": "barrie",
@@ -1159,6 +1160,7 @@ const POSTAL_ROUTING: Record<string, Record<string, string>> = {
     "R8A": "winnipeg",
     "R8N": "winnipeg",
     "R9A": "winnipeg",
+    "RY30W8": "winnipeg",
     // Windsor/Chatham
     "N0P": "windsor-chatham",
     "N0R": "windsor-chatham",
